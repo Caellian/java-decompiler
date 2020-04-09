@@ -16,9 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <fstream>
 #include <map>
 #include <string>
-#include <fstream>
 
 #include "JarFile.hpp"
 #include "class/ClassFile.hpp"
@@ -55,7 +55,8 @@ int main(int argc, const char **argv)
 
   for (const auto &it : util::string::split_string(args["<files>"].asString(), ';'))
   {
-    if (it.ends_with(".jar")) {
+    if (it.ends_with(".jar"))
+    {
       spdlog::info("Processing file: {}", it);
       auto jar = JarFile(it);
 
@@ -84,14 +85,17 @@ int main(int argc, const char **argv)
           ClassFile().parse(cf);
         }
       }
-    } else if (it.ends_with(".class")) {
+    }
+    else if (it.ends_with(".class"))
+    {
       spdlog::info("- {}", it);
       std::ifstream content(it);
-      std::string content_string((std::istreambuf_iterator<char>(content)),
-                      std::istreambuf_iterator<char>());
+      std::string content_string((std::istreambuf_iterator<char>(content)), std::istreambuf_iterator<char>());
       auto cf = util::IObjStream(content_string);
       ClassFile().parse(cf);
-    } else {
+    }
+    else
+    {
       spdlog::error("File must end with '.jar' or '.class'!");
     }
   }

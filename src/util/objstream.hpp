@@ -20,7 +20,9 @@
 #define LDECOMP_OBJSTREAM_HPP
 
 #include "endian.hpp"
+#include <cmath>
 #include <istream>
+#include <spdlog/spdlog.h>
 #include <sstream>
 
 namespace util
@@ -94,6 +96,28 @@ public:
   void str(const string_type &string)
   {
     stringbuf.str(string);
+  }
+
+  IObjStreamBase<char_type, traits_type, allocator_type> &offset(off_type n)
+  {
+    std::istream::sentry se(*this, true);
+    if (se)
+    {
+      if (n > 0)
+      {
+        this->rdbuf()->sgetn(nullptr, n);
+      }
+      else
+      {
+        // FIXME: Temporary workaround for this->rdbuf()->seekoff() not working.
+        // Requires custom buffer implementation to fix.
+        for (int i = 0; i < std::abs(n); ++i)
+        {
+          this->rdbuf()->sungetc();
+        }
+      }
+    }
+    return *this;
   }
 
   IObjStreamBase<char_type, traits_type, allocator_type> &read(uint8_t *data, std::streamsize data_size)

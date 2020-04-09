@@ -19,7 +19,7 @@
 #include "ClassFile.hpp"
 
 #include "../error/class_format_error.hpp"
-#include "../util/endian.hpp"
+#include "constant_tag.hpp"
 #include <spdlog/spdlog.h>
 
 const uint32_t class_signature = 0xCAFEBABE;
@@ -41,13 +41,26 @@ ClassFile &ClassFile::parse(util::IObjStream &file_stream) noexcept(false)
   file_stream.read(m_minor_version);
   file_stream.read(m_major_version);
 
-  uint16_t constant_pool_count = 0;
-  file_stream.read(constant_pool_count);
-  for (uint16_t i = 1; i < constant_pool_count; ++i)
+  file_stream.read(m_constant_pool_size);
+  m_constant_pool_size = uint16_t(m_constant_pool_size - 1);
+  delete[] m_constant_pool; // Delete contents just in case
+  m_constant_pool = new ConstantInfo[m_constant_pool_size];
+  for (uint16_t i = 0, size_incr; i < m_constant_pool_size; i = uint16_t(i + size_incr))
   {
-    auto ptr = std::make_unique<ConstantInfo>();
-    ptr->parse(file_stream);
-    m_constant_pool.push_back(std::move(ptr));
+    m_constant_pool[i] = ConstantInfo();
+    try
+    {
+      m_constant_pool[i].parse(file_stream);
+    }
+    catch (const class_format_error &cfe)
+    {
+      spdlog::warn("Error parsing class constant: {}", cfe.what());
+      m_constant_pool[i] = ConstantInfo();
+      spdlog::debug("Pushed placeholder dummy in constant pool.");
+      file_stream.offset(-1);
+    }
+    spdlog::debug("# {} - {}", i, m_constant_pool[i].string());
+    size_incr = constant_tag_offset(m_constant_pool[i].tag());
   }
 
   uint16_t flags {};
@@ -59,16 +72,16 @@ ClassFile &ClassFile::parse(util::IObjStream &file_stream) noexcept(false)
   if (this_index != 0) // should always be true
   {
     auto &this_class_entry = m_constant_pool[this_index - 1uL];
-    if (this_class_entry->tag() != constant_tag::Class)
+    if (this_class_entry.tag() != constant_tag::Class)
     {
       throw class_format_error("class field 'this' does not point to a class constant pool tag");
     }
-    auto this_name_ref = dynamic_cast<ConstantInfoDataReference *>(this_class_entry->data().get());
-    if (this_name_ref != nullptr)
-    {
-      auto utf8_field = this_name_ref->accessReference<ConstantInfoDataUtf8>(m_constant_pool);
-      m_this_name = utf8_field.value();
-    }
+    auto this_name_ref = dynamic_cast<const ConstantDataReference *>(this_class_entry.data());
+    readConstant(this_name_ref, m_this_name);
+  }
+  else
+  {
+    throw class_format_error("class name not specified");
   }
 
   uint16_t super_index {};
@@ -76,20 +89,17 @@ ClassFile &ClassFile::parse(util::IObjStream &file_stream) noexcept(false)
   if (super_index != 0)
   { // class has super
     auto &super_class_entry = m_constant_pool[super_index - 1uL];
-    if (super_class_entry->tag() != constant_tag::Class)
+    if (super_class_entry.tag() != constant_tag::Class)
     {
       throw class_format_error("class field 'super' does not point to a class constant pool tag");
     }
-    auto super_name_ref = dynamic_cast<ConstantInfoDataReference *>(super_class_entry->data().get());
-    if (super_name_ref != nullptr)
-    {
-      auto utf8_field = super_name_ref->accessReference<ConstantInfoDataUtf8>(m_constant_pool);
-      m_super_name = utf8_field.value();
-    }
+    auto super_name_ref = dynamic_cast<const ConstantDataReference *>(super_class_entry.data());
+    readConstant(super_name_ref, m_super_name);
   }
 
   uint16_t interface_count {};
   file_stream.read(interface_count);
+  m_interfaces.reserve(interface_count);
   for (uint16_t i = 0; i < interface_count; ++i)
   {
     uint16_t interface_index {};
@@ -97,39 +107,48 @@ ClassFile &ClassFile::parse(util::IObjStream &file_stream) noexcept(false)
     if (interface_index != 0)
     { // reference is valid
       auto &interface_class_entry = m_constant_pool[interface_index - 1uL];
-      if (interface_class_entry->tag() != constant_tag::Class)
+      if (interface_class_entry.tag() != constant_tag::Class)
       {
         throw class_format_error("class interface does not point to a class constant pool tag");
       }
-      auto interface_name_ref = dynamic_cast<ConstantInfoDataReference *>(interface_class_entry->data().get());
-      if (interface_name_ref != nullptr)
-      {
-        auto utf8_field = interface_name_ref->accessReference<ConstantInfoDataUtf8>(m_constant_pool);
-        m_interfaces.push_back(utf8_field.value());
-      }
+      auto interface_name_ref = dynamic_cast<const ConstantDataReference *>(interface_class_entry.data());
+      std::string name;
+      readConstant(interface_name_ref, name);
+    }
+    else
+    {
+      throw class_format_error("interface constant pool index is 0");
     }
   }
 
   uint16_t field_count {};
   file_stream.read(field_count);
+  m_fields.reserve(field_count);
   for (uint16_t i = 0; i < field_count; ++i)
   {
-    m_fields.push_back(MemberInfo().parse(file_stream, m_constant_pool));
+    m_fields.push_back(MemberInfo().parse(file_stream, this));
   }
 
   uint16_t method_count {};
   file_stream.read(method_count);
+  m_methods.reserve(method_count);
   for (uint16_t i = 0; i < method_count; ++i)
   {
-    m_methods.push_back(MemberInfo().parse(file_stream, m_constant_pool));
+    m_methods.push_back(MemberInfo().parse(file_stream, this));
   }
 
   uint16_t attrib_count {};
   file_stream.read(attrib_count);
+  m_attributes.reserve(attrib_count);
   for (size_t i = 0; i < attrib_count; i++)
   {
-    m_attributes.push_back(AttributeInfo().parse(file_stream, m_constant_pool));
+    m_attributes.push_back(AttributeInfo().parse(file_stream, this));
   }
 
   return *this;
+}
+
+ClassFile::~ClassFile() noexcept
+{
+  delete[] m_constant_pool;
 }

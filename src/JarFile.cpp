@@ -39,6 +39,9 @@ std::vector<std::string> JarFile::files() const
   std::vector<std::string> res;
 
   unzFile file = unzOpen(absolute_path.c_str());
+  unz_global_info info;
+  unzGetGlobalInfo(file, &info);
+  res.reserve(info.number_entry);
 
   if (file == nullptr)
   {

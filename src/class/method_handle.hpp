@@ -19,7 +19,9 @@
 #ifndef LDECOMP_METHOD_HANDLE_HPP
 #define LDECOMP_METHOD_HANDLE_HPP
 
-enum class MethodHandleKind
+#include <string>
+
+enum class method_handle_kind
 {
   GetField = 1,
   GetStatic = 2,
@@ -31,5 +33,7 @@ enum class MethodHandleKind
   NewInvokeSpecial = 8,
   InvokeInterface = 9
 };
+
+[[nodiscard]] std::string method_handle_kind_name(method_handle_kind of);
 
 #endif // LDECOMP_METHOD_HANDLE_HPP

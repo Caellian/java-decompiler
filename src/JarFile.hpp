@@ -44,7 +44,8 @@ public:
 
   [[nodiscard]] std::optional<std::istringstream> openTextFile(const std::string &jar_path) noexcept;
   [[nodiscard]] std::optional<util::IObjStream> openBinaryFile(const std::string &jar_path) noexcept;
-  [[nodiscard]] std::vector<std::string> files() const;
+  [[nodiscard]] std::vector<std::string> files()
+      const; // TODO: Return an iterator. This consumes a lot of memory with large archives.
 };
 
 #endif // LDECOMP_JARFILE_HPP

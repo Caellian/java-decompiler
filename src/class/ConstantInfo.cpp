@@ -18,6 +18,7 @@
 
 #include "ConstantInfo.hpp"
 #include "../error/class_format_error.hpp"
+#include "ConstantData.hpp"
 
 #include <cstdlib>
 
@@ -30,41 +31,41 @@ ConstantInfo &ConstantInfo::parse(util::IObjStream &file_stream) noexcept(false)
   switch (m_tag)
   {
   case constant_tag::Utf8:
-    m_dataptr = std::make_unique<ConstantInfoDataUtf8>(file_stream);
+    m_dataptr = std::make_unique<ConstantDataUtf8>(file_stream);
     break;
   case constant_tag::Integer:
-    m_dataptr = std::make_unique<ConstantInfoDataNum<int32_t>>(file_stream);
+    m_dataptr = std::make_unique<ConstantDataNumeric<int32_t>>(file_stream);
     break;
   case constant_tag::Float:
-    m_dataptr = std::make_unique<ConstantInfoDataNum<float>>(file_stream);
+    m_dataptr = std::make_unique<ConstantDataNumeric<float>>(file_stream);
     break;
   case constant_tag::Long:
-    m_dataptr = std::make_unique<ConstantInfoDataNum<int64_t>>(file_stream);
+    m_dataptr = std::make_unique<ConstantDataNumeric<int64_t>>(file_stream);
     break;
   case constant_tag::Double:
-    m_dataptr = std::make_unique<ConstantInfoDataNum<double>>(file_stream);
+    m_dataptr = std::make_unique<ConstantDataNumeric<double>>(file_stream);
     break;
   case constant_tag::FieldReference:
   case constant_tag::MethodReference:
   case constant_tag::InterfaceMethodReference:
-    m_dataptr = std::make_unique<ConstantInfoDataRef>(file_stream);
+    m_dataptr = std::make_unique<ConstantDataTypeSpec>(file_stream);
     break;
   case constant_tag::NameAndType:
-    m_dataptr = std::make_unique<ConstantInfoDataNameAndRef>(file_stream);
+    m_dataptr = std::make_unique<ConstantDataDescriptor>(file_stream);
     break;
   case constant_tag::MethodHandle:
-    m_dataptr = std::make_unique<ConstantInfoDataMethodHandle>(file_stream);
+    m_dataptr = std::make_unique<ConstantDataMethodHandle>(file_stream);
     break;
   case constant_tag::Dynamic:
   case constant_tag::InvokeDynamic:
-    m_dataptr = std::make_unique<ConstantInfoDataDynamic>(file_stream);
+    m_dataptr = std::make_unique<ConstantDataDynamic>(file_stream);
     break;
   case constant_tag::Class:
   case constant_tag::String:
   case constant_tag::MethodType:
   case constant_tag::Module:
   case constant_tag::Package:
-    m_dataptr = std::make_unique<ConstantInfoDataReference>(file_stream);
+    m_dataptr = std::make_unique<ConstantDataReference>(file_stream);
     break;
   default:
     throw class_format_error("invalid constant tag (tag: " + std::to_string(static_cast<uint8_t>(m_tag)) + ")");

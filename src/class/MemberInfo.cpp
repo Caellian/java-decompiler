@@ -18,9 +18,9 @@
 
 #include "MemberInfo.hpp"
 #include "../error/class_format_error.hpp"
+#include "ConstantData.hpp"
 
-MemberInfo &MemberInfo::parse(util::IObjStream &file_stream,
-                              const std::vector<std::unique_ptr<ConstantInfo>> &const_pool) noexcept(false)
+MemberInfo &MemberInfo::parse(util::IObjStream &file_stream, const ClassFile *class_file) noexcept(false)
 {
   uint16_t flags {};
   file_stream.read(flags);
@@ -28,17 +28,17 @@ MemberInfo &MemberInfo::parse(util::IObjStream &file_stream,
 
   uint16_t name_index {};
   file_stream.read(name_index);
-  m_name = dynamic_cast<ConstantInfoDataUtf8 *>(const_pool[name_index - 1uL]->data().get())->value();
+  class_file->readConstant(name_index, m_name);
 
   uint16_t descriptor_index {};
   file_stream.read(descriptor_index);
-  m_descriptor = dynamic_cast<ConstantInfoDataUtf8 *>(const_pool[descriptor_index - 1uL]->data().get())->value();
+  class_file->readConstant(descriptor_index, m_descriptor);
 
   uint16_t attrib_count {};
   file_stream.read(attrib_count);
   for (size_t ai = 0; ai < attrib_count; ai++)
   {
-    m_attributes.push_back(AttributeInfo().parse(file_stream, const_pool));
+    m_attributes.push_back(AttributeInfo().parse(file_stream, class_file));
   }
 
   return *this;

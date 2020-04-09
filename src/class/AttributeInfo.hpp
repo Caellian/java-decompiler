@@ -20,10 +20,12 @@
 #define LDECOMP_ATTRIBUTEINFO_HPP
 
 #include "../util/objstream.hpp"
-#include "ConstantInfo.hpp"
+#include "ClassFile.hpp"
 #include <memory>
 #include <string>
 #include <vector>
+
+class ClassFile;
 
 class AttributeInfo
 {
@@ -40,8 +42,7 @@ public:
   AttributeInfo &operator=(const AttributeInfo &other) noexcept;
   AttributeInfo &operator=(AttributeInfo &&other) noexcept;
 
-  AttributeInfo &parse(util::IObjStream &file_stream,
-                       const std::vector<std::unique_ptr<ConstantInfo>> &const_pool) noexcept(false);
+  AttributeInfo &parse(util::IObjStream &file_stream, const ClassFile *class_file) noexcept(false);
 
   [[nodiscard]] const std::string &name() const
   {

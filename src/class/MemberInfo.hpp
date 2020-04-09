@@ -26,6 +26,9 @@
 #include <memory>
 #include <string>
 
+class ClassFile;
+class AttributeInfo;
+
 const size_t field_access_size = 16;
 
 class MemberInfo
@@ -38,8 +41,7 @@ class MemberInfo
 public:
   MemberInfo() noexcept = default;
 
-  MemberInfo &parse(util::IObjStream &file_stream,
-                    const std::vector<std::unique_ptr<ConstantInfo>> &const_pool) noexcept(false);
+  MemberInfo &parse(util::IObjStream &file_stream, const ClassFile *class_file) noexcept(false);
 
   [[nodiscard]] const std::bitset<field_access_size> &access_flags() const
   {

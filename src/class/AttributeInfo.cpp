@@ -19,12 +19,11 @@
 #include "AttributeInfo.hpp"
 #include <cstring>
 
-AttributeInfo &AttributeInfo::parse(util::IObjStream &file_stream,
-                                    const std::vector<std::unique_ptr<ConstantInfo>> &const_pool) noexcept(false)
+AttributeInfo &AttributeInfo::parse(util::IObjStream &file_stream, const ClassFile *class_file) noexcept(false)
 {
   uint16_t name_index {};
   file_stream.read(name_index);
-  m_name = dynamic_cast<ConstantInfoDataUtf8 *>(const_pool[name_index - 1uL]->data().get())->value();
+  class_file->readConstant(name_index, m_name);
 
   file_stream.read(m_size);
 
@@ -58,7 +57,8 @@ AttributeInfo::AttributeInfo(const AttributeInfo &other) noexcept
 
 AttributeInfo &AttributeInfo::operator=(const AttributeInfo &other) noexcept
 {
-  if (this != &other) {
+  if (this != &other)
+  {
     m_name = other.m_name;
     m_size = other.m_size;
     delete[] m_data;
@@ -71,7 +71,8 @@ AttributeInfo &AttributeInfo::operator=(const AttributeInfo &other) noexcept
 
 AttributeInfo &AttributeInfo::operator=(AttributeInfo &&other) noexcept
 {
-  if (this != &other) {
+  if (this != &other)
+  {
     m_name = std::move(other.m_name);
     m_size = other.m_size;
     delete[] m_data;
