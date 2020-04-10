@@ -1,0 +1,35 @@
+name: MacOS CI
+env:
+  CI_BUILD: true
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-macos:
+    name: macos-latest (clang)
+    runs-on: macos-latest
+    env:
+      CC: /usr/bin/clang
+      CXX: /usr/bin/clang++
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install conan
+        run: |
+          brew install python
+          sudo pip install --upgrade pip
+          sudo pip install --upgrade setuptools
+          sudo pip install conan
+      - name: Run CMake
+        run: cmake . -DCMAKE_BUILD_TYPE="RelWithDebInfo"
+      - name: Build sources
+        run: cmake --build . --config "RelWithDebInfo"
+      - uses: actions/upload-artifact@v1
+        with:
+          name: ldecomp-macos-x64
+          path: bin/ldecomp

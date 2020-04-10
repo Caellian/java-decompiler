@@ -1,4 +1,3 @@
-include_directories(${ldecomp_includes})
 set(ldecomp_sources ${ldecomp_sources}
         class/access_flags.hpp
         class/AttributeInfo.cpp
@@ -25,8 +24,11 @@ set(ldecomp_sources ${ldecomp_sources}
         util/objstream.hpp
         util/string.hpp)
 
-set(ldecomp_libs ${ldecomp_libs} CONAN_PKG::docopt.cpp CONAN_PKG::fmt
-        CONAN_PKG::spdlog CONAN_PKG::minizip)
+set(ldecomp_libs ${ldecomp_libs}
+        CONAN_PKG::docopt.cpp
+        CONAN_PKG::fmt
+        CONAN_PKG::spdlog
+        CONAN_PKG::minizip)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(ldecomp_def ${ldecomp_def} -DDEBUG)
@@ -35,6 +37,10 @@ endif ()
 add_executable(ldecomp main.cpp ${ldecomp_sources})
 target_link_libraries(ldecomp PRIVATE project_options project_warnings ${ldecomp_libs})
 target_compile_definitions(ldecomp PRIVATE ${ldecomp_def})
+target_include_directories(ldecomp PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/ldecomp>
+        $<INSTALL_INTERFACE:include/ldecomp>)
+
 install(
         TARGETS ldecomp
         RUNTIME DESTINATION bin

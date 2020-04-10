@@ -5,16 +5,18 @@ else ()
     include(${CONAN_CATCH2_ROOT}/lib/cmake/Catch2/Catch.cmake)
 endif ()
 
+add_custom_target(tests)
 
 add_library(catch_main STATIC catch_main.cpp)
 target_link_libraries(catch_main PUBLIC CONAN_PKG::catch2)
 
-add_executable(tests tests.cpp)
-target_link_libraries(tests PRIVATE project_warnings project_options
+add_executable(unit_tests tests.cpp)
+target_link_libraries(unit_tests PRIVATE project_warnings project_options
         catch_main)
+add_dependencies(tests unit_tests)
 
 catch_discover_tests(
-        tests
+        unit_tests
         TEST_PREFIX
         "unittests:"
         EXTRA_ARGS
@@ -26,6 +28,7 @@ catch_discover_tests(
 add_executable(constexpr_tests constexpr_tests.cpp)
 target_link_libraries(constexpr_tests PRIVATE project_options project_warnings
         catch_main)
+add_dependencies(tests constexpr_tests)
 
 catch_discover_tests(
         constexpr_tests
@@ -46,7 +49,7 @@ target_link_libraries(
 target_compile_definitions(
         relaxed_constexpr_tests PRIVATE
         -DCATCH_CONFIG_RUNTIME_STATIC_REQUIRE)
-
+add_dependencies(tests relaxed_constexpr_tests)
 
 catch_discover_tests(
         relaxed_constexpr_tests

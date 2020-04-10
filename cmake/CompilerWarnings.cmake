@@ -1,5 +1,4 @@
-# from here:
-#
+# Reference:
 # https://github.com/lefticus/cppbestpractices/blob/master/02-Use_the_Tools_Available.md
 
 function(set_project_warnings project_name)
@@ -28,6 +27,7 @@ function(set_project_warnings project_name)
             /w14905 # wide string literal cast to 'LPSTR'
             /w14906 # string literal cast to 'LPWSTR'
             /w14928 # illegal copy-initialization; more than one user-defined conversion has been implicitly applied
+            /permissive- # standards conformance mode for MSVC compiler.
             )
 
     set(CLANG_WARNINGS
@@ -64,10 +64,12 @@ function(set_project_warnings project_name)
 
     if (MSVC)
         set(PROJECT_WARNINGS ${MSVC_WARNINGS})
-    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
         set(PROJECT_WARNINGS ${CLANG_WARNINGS})
-    else ()
+    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set(PROJECT_WARNINGS ${GCC_WARNINGS})
+    else ()
+    	message(AUTHOR_WARNING "No compiler warnings set for '${CMAKE_CXX_COMPILER_ID}' compiler.")
     endif ()
 
     target_compile_options(${project_name} INTERFACE ${PROJECT_WARNINGS})

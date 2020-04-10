@@ -19,11 +19,25 @@
 #include "JarFile.hpp"
 
 #include <cinttypes>
+#include <cstdio>
 #include <spdlog/spdlog.h>
 
-JarFile::JarFile(const std::string &path) : absolute_path(std::filesystem::absolute(std::filesystem::path(path)))
+inline bool can_open_file(const std::string &file)
 {
-  if (!static_cast<bool>(std::fopen(absolute_path.c_str(), "re")))
+#ifdef _MSC_VER
+  FILE *tmp;
+  std::wstring w_clone(file.length(), L' ');
+  std::copy(file.begin(), file.end(), w_clone.begin());
+  return fopen_s(&tmp, w_clone.c_str(), L"r") != 0;
+#else
+  return std::fopen(file.c_str(), "re") != nullptr;
+#endif
+}
+
+JarFile::JarFile(const std::string &path)
+    : absolute_path(std::filesystem::absolute(std::filesystem::path(path)).string())
+{
+  if (!can_open_file(absolute_path))
   {
     throw file_inaccessible_error(absolute_path);
   }
@@ -66,8 +80,8 @@ std::vector<std::string> JarFile::files() const
 
 JarFile &JarFile::open(const std::string &path)
 {
-  absolute_path = std::filesystem::absolute(std::filesystem::path(path));
-  if (!static_cast<bool>(std::fopen(absolute_path.c_str(), "re")))
+  absolute_path = std::filesystem::absolute(std::filesystem::path(path)).string();
+  if (!can_open_file(path))
   {
     throw file_inaccessible_error(absolute_path);
   }

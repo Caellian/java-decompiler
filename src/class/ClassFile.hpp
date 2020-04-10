@@ -28,6 +28,7 @@
 
 #include <bitset>
 #include <vector>
+#include <fmt/format.h>
 
 class MemberInfo;
 class AttributeInfo;

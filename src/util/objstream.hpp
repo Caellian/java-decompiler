@@ -22,7 +22,6 @@
 #include "endian.hpp"
 #include <cmath>
 #include <istream>
-#include <spdlog/spdlog.h>
 #include <sstream>
 
 namespace util
@@ -47,16 +46,17 @@ private:
   stringbuf_type stringbuf;
 
 public:
-  IObjStreamBase() : istream_type(), stringbuf(std::ios_base::in)
+  IObjStreamBase() : istream_type(std::istringstream().rdbuf()), stringbuf(std::ios_base::in)
   {
     this->init(&stringbuf);
   }
-  explicit IObjStreamBase(std::ios_base::openmode mode) : istream_type(), stringbuf(mode | std::ios_base::in)
+  explicit IObjStreamBase(std::ios_base::openmode mode)
+      : istream_type(std::istringstream().rdbuf()), stringbuf(mode | std::ios_base::in)
   {
     this->init(&stringbuf);
   }
   explicit IObjStreamBase(const string_type &str, std::ios_base::openmode mode = std::ios_base::in)
-      : istream_type(), stringbuf(str, mode | std::ios_base::in)
+      : istream_type(std::istringstream().rdbuf()), stringbuf(str, mode | std::ios_base::in)
   {
     this->init(&stringbuf);
   }

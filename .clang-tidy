@@ -1,5 +1,5 @@
 ---
 Checks:          '*,-fuchsia-*,-google-*,-zircon-*,-abseil-*,-modernize-use-trailing-return-type,-llvm-*,-cppcoreguidelines-*'
-WarningsAsErrors: '1'
+WarningsAsErrors: '*'
 HeaderFilterRegex: 'hpp'
 FormatStyle:     none

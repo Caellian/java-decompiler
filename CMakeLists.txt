@@ -1,4 +1,8 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.13)
+if (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR} AND NOT "$ENV{CI_BUILD}")
+  message(FATAL_ERROR "Stopping the in-source build.")
+endif()
+
 project(ldecomp CXX)
 
 include(cmake/StandardProjectSettings.cmake)
@@ -39,17 +43,20 @@ run_conan()
 add_subdirectory(thirdparty)
 
 option(ENABLE_TESTING "Enable Test Builds" OFF)
-if(ENABLE_TESTING)
+if(ENABLE_TESTING OR ENABLE_FUZZING)
+  message("Testing enabled")
   enable_testing()
-  message("Building Tests")
+endif()
+
+if(ENABLE_TESTING)
   add_subdirectory(test)
+  message("Configuring tests done")
 endif()
 
 option(ENABLE_FUZZING "Enable Fuzz Test Builds" OFF)
 if(ENABLE_FUZZING)
-  # https://www.llvm.org/docs/LibFuzzer.html
-  message("Building Fuzz Tests")
   add_subdirectory(fuzz_test)
+  message("Configuring fuzz tests done")
 endif()
 
 add_subdirectory(src)

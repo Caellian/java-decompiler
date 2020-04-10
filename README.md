@@ -1,4 +1,9 @@
 # Java Decompiler
+![Linux CI](https://github.com/Caellian/java-decompiler/workflows/Linux%20CI/badge.svg)
+![MacOS CI](https://github.com/Caellian/java-decompiler/workflows/MacOS%20CI/badge.svg)
+![Windows CI](https://github.com/Caellian/java-decompiler/workflows/Windows%20CI/badge.svg)
+![Tests](https://github.com/Caellian/java-decompiler/workflows/Tests/badge.svg)
+![Sanitizers](https://github.com/Caellian/java-decompiler/workflows/Sanitizers/badge.svg)
 
 A modern and very efficient Java decompiler.
 
@@ -47,4 +52,7 @@ I expect some gain in speed which might be significant for large JARs.
 ## License
 
 This project is licensed under the GPL license, version 3.
-A copy of the license is provided in the [LICENSE.md](LICENSE.md) file.
+A copy of the GPL license is provided in the [LICENSE.md](LICENSE.md) file.
+
+Files inside [.github](.github) directory are provided under MIT License.
+A copy of the MIT license is provided in the [.github/LICENSE.md](.github/LICENSE.md) file.

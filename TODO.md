@@ -32,3 +32,11 @@
 - Allow piping decompiled classes into stdout
 - Support for proguard generated mappings?
 
+## Project
+
+- Add CPack configuration.
+    - Create a GitHub  action for creating packages on tagged commits.
+        - https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#onpushpull_requestbranchestags
+        - https://github.com/AButler/upload-release-assets
+        - https://stackoverflow.com/questions/18216991/create-a-tag-in-a-github-repository
+        - https://github.com/anothrNick/github-tag-action

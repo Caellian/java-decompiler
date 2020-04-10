@@ -1,0 +1,60 @@
+name: Linux CI
+env:
+  CI_BUILD: true
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-ubuntu:
+    strategy:
+      matrix:
+        compiler:
+          - name: clang
+            version: 10
+            c-compiler: clang
+            cpp-compiler: clang++
+          - name: gcc
+            version: 9
+            c-compiler: gcc
+            cpp-compiler: g++
+    name: ubuntu-latest (${{ matrix.compiler.name }} ${{ matrix.compiler.version }})
+    runs-on: ubuntu-latest
+    env:
+      CC: /usr/bin/${{ matrix.compiler.c-compiler }}-${{ matrix.compiler.version }}
+      CXX: /usr/bin/${{ matrix.compiler.cpp-compiler }}-${{ matrix.compiler.version }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install clang
+        if: matrix.compiler.name == 'clang'
+        run: |
+          sudo apt-get update -m
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh ${{ matrix.compiler.version }}
+      - name: Install gcc
+        if: matrix.compiler.name == 'gcc'
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+          sudo apt-get update -m
+          sudo apt-get install ${{ matrix.compiler.name }}-${{ matrix.compiler.version }}
+      - name: Install conan
+        run: |
+          sudo apt-get install cmake python3
+          sudo pip install --upgrade pip
+          sudo pip install --upgrade setuptools
+          sudo pip install conan
+      - name: Run CMake
+        run: cmake . -DCMAKE_BUILD_TYPE="RelWithDebInfo"
+      - name: Build sources
+        run: cmake --build . --config "RelWithDebInfo"
+      - uses: actions/upload-artifact@v1
+        if: matrix.compiler.name == 'clang'
+        with:
+          name: ldecomp-linux-x64
+          path: bin/ldecomp

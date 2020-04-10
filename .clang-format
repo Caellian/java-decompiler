@@ -1,13 +1,14 @@
 ---
-Language: Cpp
 BasedOnStyle: Microsoft
+IndentWidth: 2
+TabWidth: 2
+---
+Language: Cpp
 AllowShortBlocksOnASingleLine: true
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortLambdasOnASingleLine: Empty
-IndentWidth: 2
 KeepEmptyLinesAtTheStartOfBlocks: false
 SpaceAfterCStyleCast: true
 SpaceBeforeCpp11BracedList: true
-TabWidth:        2
-UseTab:          Never
+UseTab: Never
 ...

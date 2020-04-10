@@ -1,0 +1,36 @@
+name: clang-format
+env:
+  CI_BUILD: true
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install clang-format
+        run: |
+          sudo apt-get update -m
+          sudo apt-get install clang-format-9
+      - name: Run clang-format
+        run: clang-format-9 -i $(find -iregex "./src/.*\.[hc]pp" -or -iregex "./include/.*\.[hc]pp" -or -iregex "./test/.*\.[hc]pp" -or -iregex "./fuzz_test/.*\.[hc]pp")
+      - name: Install cmake-format
+        run: |
+          sudo apt-get install python3
+          sudo pip install --upgrade pip
+          sudo pip install cmake-format
+      - name: Run cmake-format
+        run: cmake-format -i -c ".cmake-format.yaml" $(find -iregex "./.*\.cmake" -or -name "CMakeLists.txt")
+      - uses: stefanzweifel/git-auto-commit-action@v4.1.2
+        with:
+          commit_message: Applied automatic formatting
+          branch: ${{ github.head_ref }}
+          commit_options: '--no-verify --signoff'
+          commit_user_name: Formatting Bot

@@ -1,0 +1,64 @@
+name: Tests
+env:
+  CI_BUILD: true
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      CC: /usr/bin/gcc-9
+      CXX: /usr/bin/g++-9
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install gcc
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+          sudo apt-get update -m
+          sudo apt-get install gcc-9
+      - name: Install conan
+        run: |
+          sudo apt-get install cmake python3
+          sudo pip install --upgrade pip
+          sudo pip install --upgrade setuptools
+          sudo pip install conan
+      - name: Run CMake
+        run: cmake . -DENABLE_TESTING=ON
+      - name: Build tests
+        run: cmake --build . --target "tests" --config "Debug"
+      - name: Run tests
+        run: ctest
+  fuzz-tests:
+    runs-on: ubuntu-latest
+    env:
+      CC: /usr/bin/clang-10
+      CXX: /usr/bin/clang++-10
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install clang
+        run: |
+          sudo apt-get update -m
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 10
+      - name: Install conan
+        run: |
+          sudo apt-get install cmake python3
+          sudo pip install --upgrade pip
+          sudo pip install --upgrade setuptools
+          sudo pip install conan
+      - name: Run CMake
+        run: cmake . -DENABLE_FUZZING=ON
+      - name: Build fuzz tester
+        run: cmake --build . --target "fuzz_tests" --config "Debug"
+      - name: Run tests
+        run: ctest
