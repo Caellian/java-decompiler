@@ -22,13 +22,15 @@ set(ldecomp_sources ${ldecomp_sources}
         JarFile.hpp
         util/endian.hpp
         util/objstream.hpp
-        util/string.hpp)
+        util/string.hpp
+        )
 
 set(ldecomp_libs ${ldecomp_libs}
         CONAN_PKG::docopt.cpp
         CONAN_PKG::fmt
         CONAN_PKG::spdlog
-        CONAN_PKG::minizip)
+        CONAN_PKG::minizip
+        )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(ldecomp_def ${ldecomp_def} -DDEBUG)

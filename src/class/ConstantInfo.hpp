@@ -35,6 +35,12 @@ class ConstantInfo
 
 public:
   ConstantInfo() noexcept = default;
+  ConstantInfo(const ConstantInfo &other) noexcept;
+  ConstantInfo(ConstantInfo &&other) noexcept;
+  ~ConstantInfo() noexcept = default;
+
+  ConstantInfo &operator=(const ConstantInfo &other) noexcept;
+  ConstantInfo &operator=(ConstantInfo &&other) noexcept;
 
   ConstantInfo &parse(util::IObjStream &file_stream) noexcept(false);
 

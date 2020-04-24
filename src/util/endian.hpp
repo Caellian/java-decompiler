@@ -34,7 +34,7 @@ template <typename Type> constexpr Type &reverse(Type &of)
 
   for (size_t i = 0; i < size; ++i)
   {
-    data[i] = static_cast<uint8_t>(ref >> ((size - i - 1) * 8)); // NOLINT(readability-magic-numbers)
+    data[i] = static_cast<uint8_t>(ref >> ((size - i - 1) * 8)); // NOLINT(readability-magic-numbers,hicpp-signed-bitwise)
   }
 
   return of;

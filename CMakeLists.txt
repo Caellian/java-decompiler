@@ -40,23 +40,23 @@ include(cmake/Conan.cmake)
 run_conan()
 
 # Include manually added third party libraries
-add_subdirectory(thirdparty)
+add_subdirectory(library)
+
+add_subdirectory(src)
 
 option(ENABLE_TESTING "Enable Test Builds" OFF)
 if(ENABLE_TESTING OR ENABLE_FUZZING)
-  message("Testing enabled")
+  message(STATUS "Testing enabled")
   enable_testing()
 endif()
 
 if(ENABLE_TESTING)
   add_subdirectory(test)
-  message("Configuring tests done")
+  message(STATUS "Configuring tests done")
 endif()
 
 option(ENABLE_FUZZING "Enable Fuzz Test Builds" OFF)
 if(ENABLE_FUZZING)
   add_subdirectory(fuzz_test)
-  message("Configuring fuzz tests done")
+  message(STATUS "Configuring fuzz tests done")
 endif()
-
-add_subdirectory(src)

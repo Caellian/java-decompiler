@@ -26,8 +26,8 @@
 #include <docopt/docopt.h>
 #include <spdlog/spdlog.h>
 
-static constexpr auto USAGE =
-    R"(Lunar Decompiler.
+static constexpr auto USAGE = R"(
+Lunar Decompiler.
 
     Usage:
           ldecomp <files> [-l files]
@@ -44,7 +44,7 @@ static constexpr auto USAGE =
           --version     Show version.
 )";
 
-int main(int argc, const char **argv)
+int main(int argc, const char **argv) // temporary NOLINT(bugprone-exception-escape)
 {
   std::map<std::string, docopt::value> args =
       docopt::docopt(USAGE, {std::next(argv), std::next(argv, argc)}, true, "Lunar Decompiler 0.0.1");
@@ -76,13 +76,46 @@ int main(int argc, const char **argv)
       }
       */
 
-      for (const auto &file_name : jar.files())
+      auto files = jar.files();
+//      auto iter = std::find_if(files.begin(), files.end(), [](const auto &f){
+//        return f.ends_with(".class");
+//      });
+      for (const auto &file_name : files)
       {
         if (file_name.ends_with(".class"))
         {
           spdlog::info("\t- {}", file_name);
-          auto cf = jar.openBinaryFile(file_name).value();
-          ClassFile().parse(cf);
+          auto class_stream = jar.openBinaryFile(file_name).value();
+          auto cf = std::move(ClassFile().parse(class_stream));
+
+          spdlog::info("Class: {}", cf.thisName());
+          for (const auto &m: cf.methods())
+          {
+            spdlog::info("\tMethod: {}, desc: {}", m.name(), m.descriptor());
+            for (const auto &a: m.attributes())
+            {
+              if (a.name() == "Code")
+              {
+                // Following lines are here for development purposes
+                // There's a lot of linting errors which are being ignored
+                for (uint32_t i = 0; i < a.size(); ++i)
+                {
+                  printf("%02X ", a.data()[i]); // NOLINT(hicpp-vararg)
+
+                  if ((i + 1) % 16 == 0) // NOLINT(readability-magic-numbers)
+                  {
+                    printf("\n"); // NOLINT(hicpp-vararg)
+                  }
+                  else if ((i + 1) % 4 == 0) // NOLINT(readability-magic-numbers)
+                  {
+                    printf(" "); // NOLINT(hicpp-vararg)
+                  }
+                }
+                printf("\n"); // NOLINT(hicpp-vararg)
+              }
+            }
+          }
+          break;
         }
       }
     }

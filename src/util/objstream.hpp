@@ -139,7 +139,7 @@ public:
       {
         this->setstate(std::ios_base::badbit);
       }
-      if (err)
+      if (err != 0)
       {
         this->setstate(err);
       }

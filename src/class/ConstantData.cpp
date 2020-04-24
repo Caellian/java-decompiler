@@ -26,6 +26,34 @@ ConstantDataUtf8::ConstantDataUtf8(util::IObjStream &file_stream)
   file_stream.read(m_value, length);
 }
 
+ConstantDataUtf8::ConstantDataUtf8(const ConstantDataUtf8 &other) noexcept
+ : ConstantDataWrapper(other) {
+  m_value = other.m_value;
+}
+
+ConstantDataUtf8::ConstantDataUtf8(ConstantDataUtf8 &&other) noexcept
+{
+  m_value = std::move(other.m_value);
+}
+
+ConstantDataUtf8 &ConstantDataUtf8::operator=(const ConstantDataUtf8 &other) noexcept
+{
+  if (this != &other)
+  {
+    m_value = other.m_value;
+  }
+  return *this;
+}
+
+ConstantDataUtf8 &ConstantDataUtf8::operator=(ConstantDataUtf8 &&other) noexcept
+{
+  if (this != &other)
+  {
+    m_value = std::move(other.m_value);
+  }
+  return *this;
+}
+
 ConstantDataMethodHandle::ConstantDataMethodHandle(util::IObjStream &file_stream)
 {
   uint8_t kindRead {};

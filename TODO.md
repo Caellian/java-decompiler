@@ -12,6 +12,8 @@
 
 - Deobfuscation support
 - Separate class handling code into it's own library
+- Allow running the decompiler as a daemon
+    - Useful for environments where jars are being decompiled partially (like IDEs)
 - Multithreading
 - Ability to modify JARs
     - How do we tell the decompiler what to do?

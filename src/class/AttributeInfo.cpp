@@ -39,19 +39,19 @@ AttributeInfo::~AttributeInfo() noexcept
   delete[] m_data;
 }
 
-AttributeInfo::AttributeInfo(AttributeInfo &&other) noexcept
+AttributeInfo::AttributeInfo(AttributeInfo &&other) noexcept :
+  m_name(std::move(other.m_name)),
+  m_size(other.m_size),
+  m_data(other.m_data)
 {
-  m_name = std::move(other.m_name);
-  m_size = other.m_size;
-  m_data = other.m_data;
   other.m_data = nullptr;
 }
 
-AttributeInfo::AttributeInfo(const AttributeInfo &other) noexcept
+AttributeInfo::AttributeInfo(const AttributeInfo &other) noexcept :
+  m_name(other.m_name),
+  m_size(other.m_size),
+  m_data(new uint8_t[other.m_size])
 {
-  m_name = other.m_name;
-  m_size = other.m_size;
-  m_data = new uint8_t[m_size];
   std::memcpy(m_data, other.m_data, m_size);
 }
 

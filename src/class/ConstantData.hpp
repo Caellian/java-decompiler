@@ -25,8 +25,8 @@
 struct ConstantData
 {
   ConstantData() noexcept = default;
-  ConstantData(ConstantData &&) noexcept = default;
   ConstantData(const ConstantData &) noexcept = default;
+  ConstantData(ConstantData &&) noexcept = default;
   virtual ~ConstantData() noexcept = default;
 
   ConstantData &operator=(const ConstantData &other) = default;
@@ -37,11 +37,40 @@ struct ConstantData
     return "unimplemented";
   }
 };
+
 template <typename WrappedType> class ConstantDataWrapper : public ConstantData
 {
 protected:
   WrappedType m_value {}; // NOLINT(misc-non-private-member-variables-in-classes)
 public:
+  ConstantDataWrapper() noexcept = default;
+  ConstantDataWrapper(const ConstantDataWrapper &other) noexcept
+  {
+    m_value = other.m_value;
+  }
+  ConstantDataWrapper(ConstantDataWrapper &&other) noexcept
+  {
+    m_value = std::move(other.m_value);
+  }
+  ~ConstantDataWrapper() noexcept override = default;
+
+  ConstantDataWrapper &operator=(const ConstantDataWrapper &other) noexcept
+  {
+    if (this != &other)
+    {
+      m_value = other.m_value;
+    }
+    return *this;
+  }
+  ConstantDataWrapper &operator=(ConstantDataWrapper &&other) noexcept
+  {
+    if (this != &other)
+    {
+      m_value = std::move(other.m_value);
+    }
+    return *this;
+  }
+
   [[nodiscard]] const WrappedType &value() const
   {
     return m_value;
@@ -51,6 +80,12 @@ class ConstantDataUtf8 : public ConstantDataWrapper<std::string>
 {
 public:
   explicit ConstantDataUtf8(util::IObjStream &file_stream);
+  ConstantDataUtf8(const ConstantDataUtf8 &other) noexcept;
+  ConstantDataUtf8(ConstantDataUtf8 &&other) noexcept;
+  ~ConstantDataUtf8() override = default;
+
+  ConstantDataUtf8 &operator=(const ConstantDataUtf8 &other) noexcept;
+  ConstantDataUtf8 &operator=(ConstantDataUtf8 &&other) noexcept;
 
   [[nodiscard]] std::string string() const override
   {
@@ -66,7 +101,7 @@ public:
     file_stream.read(this->m_value);
   }
 
-  [[nodiscard]] virtual std::string string() const
+  [[nodiscard]] std::string string() const override
   {
     return std::to_string(this->m_value);
   }

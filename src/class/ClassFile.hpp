@@ -40,7 +40,7 @@ class ClassFile
   uint16_t m_minor_version {};
   uint16_t m_major_version {};
   uint16_t m_constant_pool_size {};
-  ConstantInfo *m_constant_pool;
+  ConstantInfo *m_constant_pool {};
   std::bitset<class_access_size> m_access_flags {};
 
   std::string m_this_name {};
@@ -53,7 +53,12 @@ class ClassFile
 
 public:
   ClassFile() noexcept = default;
+  ClassFile(const ClassFile &other) noexcept;
+  ClassFile(ClassFile &&other) noexcept;
   ~ClassFile() noexcept;
+
+  ClassFile &operator=(const ClassFile &other) noexcept;
+  ClassFile &operator=(ClassFile &&other) noexcept;
 
   ClassFile &parse(util::IObjStream &file_stream) noexcept(false);
 
@@ -61,7 +66,7 @@ public:
   {
     index--;
     using traits = tag_primitive_traits<ReadType>;
-    if (index < 0 || index > m_constant_pool_size)
+    if (index > m_constant_pool_size)
     {
       throw std::logic_error(
           fmt::format("invalid constant pool index ({}), should be in range [1,{})", index, m_constant_pool_size));

@@ -43,7 +43,7 @@ ClassFile &ClassFile::parse(util::IObjStream &file_stream) noexcept(false)
 
   file_stream.read(m_constant_pool_size);
   m_constant_pool_size = uint16_t(m_constant_pool_size - 1);
-  delete[] m_constant_pool; // Delete contents just in case
+  delete[] m_constant_pool; // Delete contents just in case parse has been called multiple times.
   m_constant_pool = new ConstantInfo[m_constant_pool_size];
   for (uint16_t i = 0, size_incr; i < m_constant_pool_size; i = uint16_t(i + size_incr))
   {
@@ -59,7 +59,6 @@ ClassFile &ClassFile::parse(util::IObjStream &file_stream) noexcept(false)
       spdlog::debug("Pushed placeholder dummy in constant pool.");
       file_stream.offset(-1);
     }
-    spdlog::debug("# {} - {}", i, m_constant_pool[i].string());
     size_incr = constant_tag_offset(m_constant_pool[i].tag());
   }
 
@@ -71,7 +70,7 @@ ClassFile &ClassFile::parse(util::IObjStream &file_stream) noexcept(false)
   file_stream.read(this_index);
   if (this_index != 0) // should always be true
   {
-    auto &this_class_entry = m_constant_pool[this_index - 1uL];
+    auto &this_class_entry = m_constant_pool[this_index - 1UL];
     if (this_class_entry.tag() != constant_tag::Class)
     {
       throw class_format_error("class field 'this' does not point to a class constant pool tag");
@@ -88,7 +87,7 @@ ClassFile &ClassFile::parse(util::IObjStream &file_stream) noexcept(false)
   file_stream.read(super_index);
   if (super_index != 0)
   { // class has super
-    auto &super_class_entry = m_constant_pool[super_index - 1uL];
+    auto &super_class_entry = m_constant_pool[super_index - 1UL];
     if (super_class_entry.tag() != constant_tag::Class)
     {
       throw class_format_error("class field 'super' does not point to a class constant pool tag");
@@ -106,7 +105,7 @@ ClassFile &ClassFile::parse(util::IObjStream &file_stream) noexcept(false)
     file_stream.read(interface_index);
     if (interface_index != 0)
     { // reference is valid
-      auto &interface_class_entry = m_constant_pool[interface_index - 1uL];
+      auto &interface_class_entry = m_constant_pool[interface_index - 1UL];
       if (interface_class_entry.tag() != constant_tag::Class)
       {
         throw class_format_error("class interface does not point to a class constant pool tag");
@@ -151,4 +150,90 @@ ClassFile &ClassFile::parse(util::IObjStream &file_stream) noexcept(false)
 ClassFile::~ClassFile() noexcept
 {
   delete[] m_constant_pool;
+}
+
+ClassFile::ClassFile(const ClassFile &other) noexcept :
+  m_minor_version(other.m_minor_version),
+  m_major_version(other.m_major_version),
+  m_constant_pool_size(other.m_constant_pool_size),
+  m_access_flags(other.m_access_flags),
+
+  m_this_name(other.m_this_name),
+  m_super_name(other.m_super_name),
+
+  m_interfaces(other.m_interfaces),
+  m_fields(other.m_fields),
+  m_methods(other.m_methods),
+  m_attributes(other.m_attributes)
+{
+  m_constant_pool = new ConstantInfo[m_constant_pool_size];
+  for (size_t i = 0; i < m_constant_pool_size; ++i)
+  {
+    m_constant_pool[i] = other.m_constant_pool[i];
+  }
+}
+
+ClassFile::ClassFile(ClassFile &&other) noexcept :
+  m_minor_version(other.m_minor_version),
+  m_major_version(other.m_major_version),
+  m_constant_pool_size(other.m_constant_pool_size),
+  m_constant_pool(other.m_constant_pool),
+  m_access_flags(other.m_access_flags),
+
+  m_this_name(std::move(other.m_this_name)),
+  m_super_name(std::move(other.m_super_name)),
+
+  m_interfaces(std::move(other.m_interfaces)),
+  m_fields(std::move(other.m_fields)),
+  m_methods(std::move(other.m_methods)),
+  m_attributes(std::move(other.m_attributes))
+{
+  other.m_constant_pool = nullptr;
+}
+
+ClassFile &ClassFile::operator=(const ClassFile &other) noexcept
+{
+  if (this != &other)
+  {
+    m_minor_version = other.m_minor_version;
+    m_major_version = other.m_major_version;
+    m_constant_pool_size = other.m_constant_pool_size;
+    m_constant_pool = new ConstantInfo[m_constant_pool_size];
+    for (size_t i = 0; i < m_constant_pool_size; ++i)
+    {
+      m_constant_pool[i] = other.m_constant_pool[i];
+    }
+    m_access_flags = other.m_access_flags;
+
+    m_this_name = other.m_this_name;
+    m_super_name = other.m_super_name;
+
+    m_interfaces = other.m_interfaces;
+    m_fields = other.m_fields;
+    m_methods = other.m_methods;
+    m_attributes = other.m_attributes;
+  }
+  return *this;
+}
+
+ClassFile &ClassFile::operator=(ClassFile &&other) noexcept
+{
+  if (this != &other)
+  {
+    m_minor_version = other.m_minor_version;
+    m_major_version = other.m_major_version;
+    m_constant_pool_size = other.m_constant_pool_size;
+    m_constant_pool = other.m_constant_pool;
+    other.m_constant_pool = nullptr;
+    m_access_flags = other.m_access_flags;
+
+    m_this_name = std::move(other.m_this_name);
+    m_super_name = std::move(other.m_super_name);
+
+    m_interfaces = std::move(other.m_interfaces);
+    m_fields = std::move(other.m_fields);
+    m_methods = std::move(other.m_methods);
+    m_attributes = std::move(other.m_attributes);
+  }
+  return *this;
 }
