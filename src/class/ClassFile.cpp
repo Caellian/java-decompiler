@@ -152,19 +152,14 @@ ClassFile::~ClassFile() noexcept
   delete[] m_constant_pool;
 }
 
-ClassFile::ClassFile(const ClassFile &other) noexcept :
-  m_minor_version(other.m_minor_version),
-  m_major_version(other.m_major_version),
-  m_constant_pool_size(other.m_constant_pool_size),
-  m_access_flags(other.m_access_flags),
+ClassFile::ClassFile(const ClassFile &other) noexcept
+    : m_minor_version(other.m_minor_version), m_major_version(other.m_major_version),
+      m_constant_pool_size(other.m_constant_pool_size), m_access_flags(other.m_access_flags),
 
-  m_this_name(other.m_this_name),
-  m_super_name(other.m_super_name),
+      m_this_name(other.m_this_name), m_super_name(other.m_super_name),
 
-  m_interfaces(other.m_interfaces),
-  m_fields(other.m_fields),
-  m_methods(other.m_methods),
-  m_attributes(other.m_attributes)
+      m_interfaces(other.m_interfaces), m_fields(other.m_fields), m_methods(other.m_methods),
+      m_attributes(other.m_attributes)
 {
   m_constant_pool = new ConstantInfo[m_constant_pool_size];
   for (size_t i = 0; i < m_constant_pool_size; ++i)
@@ -173,20 +168,15 @@ ClassFile::ClassFile(const ClassFile &other) noexcept :
   }
 }
 
-ClassFile::ClassFile(ClassFile &&other) noexcept :
-  m_minor_version(other.m_minor_version),
-  m_major_version(other.m_major_version),
-  m_constant_pool_size(other.m_constant_pool_size),
-  m_constant_pool(other.m_constant_pool),
-  m_access_flags(other.m_access_flags),
+ClassFile::ClassFile(ClassFile &&other) noexcept
+    : m_minor_version(other.m_minor_version), m_major_version(other.m_major_version),
+      m_constant_pool_size(other.m_constant_pool_size), m_constant_pool(other.m_constant_pool),
+      m_access_flags(other.m_access_flags),
 
-  m_this_name(std::move(other.m_this_name)),
-  m_super_name(std::move(other.m_super_name)),
+      m_this_name(std::move(other.m_this_name)), m_super_name(std::move(other.m_super_name)),
 
-  m_interfaces(std::move(other.m_interfaces)),
-  m_fields(std::move(other.m_fields)),
-  m_methods(std::move(other.m_methods)),
-  m_attributes(std::move(other.m_attributes))
+      m_interfaces(std::move(other.m_interfaces)), m_fields(std::move(other.m_fields)),
+      m_methods(std::move(other.m_methods)), m_attributes(std::move(other.m_attributes))
 {
   other.m_constant_pool = nullptr;
 }

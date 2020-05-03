@@ -19,7 +19,10 @@
 #ifndef LDECOMP_OBJSTREAM_HPP
 #define LDECOMP_OBJSTREAM_HPP
 
+#ifndef SYS_BIG_ENDIAN
 #include "endian.hpp"
+#endif
+
 #include <cmath>
 #include <istream>
 #include <sstream>
@@ -147,9 +150,7 @@ public:
     return *this;
   }
 
-  template <typename ObjectType>
-  IObjStreamBase<char_type, traits_type, allocator_type> &read(ObjectType &obj,
-                                                               std::endian expected_endianness = std::endian::big)
+  template <typename ObjectType> IObjStreamBase<char_type, traits_type, allocator_type> &read(ObjectType &obj)
   {
     std::istream::sentry se(*this, true);
 
@@ -163,9 +164,11 @@ public:
         {
           err |= (std::ios_base::eofbit | std::ios_base::failbit);
         }
-        else if (expected_endianness != std::endian::native)
+        else
         {
+#ifndef SYS_BIG_ENDIAN
           obj = util::endian::reverse(obj);
+#endif
         }
       }
       catch (...)

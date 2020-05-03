@@ -1,8 +1,8 @@
 # Java Decompiler
-![Linux CI](https://github.com/Caellian/java-decompiler/workflows/Linux%20CI/badge.svg)
-![MacOS CI](https://github.com/Caellian/java-decompiler/workflows/MacOS%20CI/badge.svg)
-![Windows CI](https://github.com/Caellian/java-decompiler/workflows/Windows%20CI/badge.svg)
-![Tests](https://github.com/Caellian/java-decompiler/workflows/Tests/badge.svg)
+[![Linux CI](https://github.com/Caellian/java-decompiler/workflows/Linux%20CI/badge.svg)](https://github.com/Caellian/java-decompiler/actions?query=workflow%3A%22Linux+CI%22)
+[![MacOS CI](https://github.com/Caellian/java-decompiler/workflows/MacOS%20CI/badge.svg)](https://github.com/Caellian/java-decompiler/actions?query=workflow%3A%22MacOS+CI%22)
+[![Windows CI](https://github.com/Caellian/java-decompiler/workflows/Windows%20CI/badge.svg)](https://github.com/Caellian/java-decompiler/actions?query=workflow%3A%22Windows+CI%22)
+[![Tests](https://github.com/Caellian/java-decompiler/workflows/Tests/badge.svg)](https://github.com/Caellian/java-decompiler/actions?query=workflow%3ATests)
 
 A modern and very efficient Java decompiler.
 
@@ -25,17 +25,6 @@ that goes...
 Blazing fast. That being said, it doesn't actually do anything yet apart from reading class files and then disposing
 of that memory. I'll compare it to fernflower when it's actually doing something. I'm also looking into the possibility
 of adding multithreading support to make decompiling large JAR files a bit faster.
-
-## Why C++20?
-
-As of now, main reason is lack of alternatives to `std::endian` in earlier versions of the standard library.
-I also like new C++20 features and I have a feeling some of them might help a lot when I start with instruction
-handling.
-I am planning on porting the decompiler to `C++11` later and that version will be kept in a separate branch in case
-someone needs it.
-
-An alternative for platforms where new compilers aren't available yet is to build them and possibly support the codebase
-they rely on the most (the compiler).
 
 ## Why not just use fernflower?
 

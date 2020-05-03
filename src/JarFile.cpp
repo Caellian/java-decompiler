@@ -26,9 +26,7 @@ inline bool can_open_file(const std::string &file)
 {
 #ifdef _MSC_VER
   FILE *tmp;
-  std::wstring w_clone(file.length(), L' ');
-  std::copy(file.begin(), file.end(), w_clone.begin());
-  return fopen_s(&tmp, w_clone.c_str(), L"r") != 0;
+  return fopen_s(&tmp, file.c_str(), "r") != 0;
 #else
   return std::fopen(file.c_str(), "re") != nullptr;
 #endif
@@ -70,7 +68,11 @@ std::vector<std::string> JarFile::files() const
 
     std::string name;
     name.resize(file_info.size_filename);
+
+#pragma warning(disable : 4267)
     unzGetCurrentFileInfo(file, nullptr, name.data(), name.size() + 1, nullptr, 0, nullptr, 0);
+#pragma warning(default : 4267)
+
     res.push_back(name);
   } while (unzGoToNextFile(file) != UNZ_END_OF_LIST_OF_FILE);
   unzClose(file);
@@ -128,14 +130,14 @@ std::string read_jar_file_contents(unzFile file, const std::string &path)
 
 std::optional<std::istringstream> JarFile::openTextFile(const std::string &jar_path) noexcept
 {
-  auto f = unzOpen(absolute_path.c_str());
+  auto *f = unzOpen(absolute_path.c_str());
   try
   {
     auto res = read_jar_file_contents(f, jar_path);
     unzClose(f);
     return std::optional<std::istringstream> {std::istringstream(res, std::ios::in)};
   }
-  catch (const jar_file_error &err)
+  catch (const jar_file_error &)
   {
     unzClose(f);
     return std::nullopt;
@@ -144,14 +146,14 @@ std::optional<std::istringstream> JarFile::openTextFile(const std::string &jar_p
 
 std::optional<util::IObjStream> JarFile::openBinaryFile(const std::string &jar_path) noexcept
 {
-  auto f = unzOpen(absolute_path.c_str());
+  auto *f = unzOpen(absolute_path.c_str());
   try
   {
     auto res = read_jar_file_contents(f, jar_path);
     unzClose(f);
     return std::optional<util::IObjStream> {util::IObjStream(res, std::ios::in | std::ios::binary)};
   }
-  catch (const jar_file_error &err)
+  catch (const jar_file_error &)
   {
     unzClose(f);
     return std::nullopt;

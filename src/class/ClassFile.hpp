@@ -27,8 +27,8 @@
 #include "tag_traits.hpp"
 
 #include <bitset>
-#include <vector>
 #include <fmt/format.h>
+#include <vector>
 
 class MemberInfo;
 class AttributeInfo;

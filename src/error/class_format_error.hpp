@@ -19,7 +19,6 @@
 #ifndef LDECOMP_CLASS_FORMAT_ERROR_HPP
 #define LDECOMP_CLASS_FORMAT_ERROR_HPP
 
-#include <bit>
 #include <stdexcept>
 
 struct class_format_error : public std::runtime_error

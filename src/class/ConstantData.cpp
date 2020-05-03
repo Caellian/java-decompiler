@@ -26,8 +26,8 @@ ConstantDataUtf8::ConstantDataUtf8(util::IObjStream &file_stream)
   file_stream.read(m_value, length);
 }
 
-ConstantDataUtf8::ConstantDataUtf8(const ConstantDataUtf8 &other) noexcept
- : ConstantDataWrapper(other) {
+ConstantDataUtf8::ConstantDataUtf8(const ConstantDataUtf8 &other) noexcept : ConstantDataWrapper(other)
+{
   m_value = other.m_value;
 }
 

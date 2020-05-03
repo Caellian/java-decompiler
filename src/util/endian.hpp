@@ -19,10 +19,11 @@
 #ifndef LDECOMP_ENDIAN_HPP
 #define LDECOMP_ENDIAN_HPP
 
-#include <bit>
+#include <climits>
 #include <cstdint>
 #include <cstdlib>
-#include <string>
+
+const uint8_t int8_width = 8;
 
 namespace util::endian
 {
@@ -30,11 +31,11 @@ template <typename Type> constexpr Type &reverse(Type &of)
 {
   Type ref(of);
   size_t size = sizeof(Type);
-  auto data = reinterpret_cast<uint8_t *>(&of);
+  auto *data = reinterpret_cast<uint8_t *>(&of);
 
   for (size_t i = 0; i < size; ++i)
   {
-    data[i] = static_cast<uint8_t>(ref >> ((size - i - 1) * 8)); // NOLINT(readability-magic-numbers,hicpp-signed-bitwise)
+    data[i] = static_cast<uint8_t>(ref >> ((size - i - 1) * int8_width)); // NOLINT(hicpp-signed-bitwise)
   }
 
   return of;

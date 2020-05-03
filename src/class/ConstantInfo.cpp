@@ -82,16 +82,20 @@ ConstantInfo::ConstantInfo(const ConstantInfo &other) noexcept : m_tag(other.m_t
     m_dataptr = std::make_unique<ConstantDataUtf8>(dynamic_cast<ConstantDataUtf8 &>(*other.m_dataptr));
     break;
   case constant_tag::Integer:
-    m_dataptr = std::make_unique<ConstantDataNumeric<int32_t>>(dynamic_cast<ConstantDataNumeric<int32_t> &>(*other.m_dataptr));
+    m_dataptr =
+        std::make_unique<ConstantDataNumeric<int32_t>>(dynamic_cast<ConstantDataNumeric<int32_t> &>(*other.m_dataptr));
     break;
   case constant_tag::Float:
-    m_dataptr = std::make_unique<ConstantDataNumeric<float>>(dynamic_cast<ConstantDataNumeric<float> &>(*other.m_dataptr));
+    m_dataptr =
+        std::make_unique<ConstantDataNumeric<float>>(dynamic_cast<ConstantDataNumeric<float> &>(*other.m_dataptr));
     break;
   case constant_tag::Long:
-    m_dataptr = std::make_unique<ConstantDataNumeric<int64_t>>(dynamic_cast<ConstantDataNumeric<int64_t> &>(*other.m_dataptr));
+    m_dataptr =
+        std::make_unique<ConstantDataNumeric<int64_t>>(dynamic_cast<ConstantDataNumeric<int64_t> &>(*other.m_dataptr));
     break;
   case constant_tag::Double:
-    m_dataptr = std::make_unique<ConstantDataNumeric<double>>(dynamic_cast<ConstantDataNumeric<double> &>(*other.m_dataptr));
+    m_dataptr =
+        std::make_unique<ConstantDataNumeric<double>>(dynamic_cast<ConstantDataNumeric<double> &>(*other.m_dataptr));
     break;
   case constant_tag::FieldReference:
   case constant_tag::MethodReference:
@@ -119,8 +123,7 @@ ConstantInfo::ConstantInfo(const ConstantInfo &other) noexcept : m_tag(other.m_t
   }
 }
 
-ConstantInfo::ConstantInfo(ConstantInfo &&other) noexcept : m_tag(other.m_tag), m_dataptr(std::move(other.m_dataptr))
-{}
+ConstantInfo::ConstantInfo(ConstantInfo &&other) noexcept : m_tag(other.m_tag), m_dataptr(std::move(other.m_dataptr)) {}
 
 ConstantInfo &ConstantInfo::operator=(const ConstantInfo &other) noexcept
 {
@@ -133,16 +136,20 @@ ConstantInfo &ConstantInfo::operator=(const ConstantInfo &other) noexcept
       m_dataptr = std::make_unique<ConstantDataUtf8>(dynamic_cast<ConstantDataUtf8 &>(*other.m_dataptr));
       break;
     case constant_tag::Integer:
-      m_dataptr = std::make_unique<ConstantDataNumeric<int32_t>>(dynamic_cast<ConstantDataNumeric<int32_t> &>(*other.m_dataptr));
+      m_dataptr = std::make_unique<ConstantDataNumeric<int32_t>>(
+          dynamic_cast<ConstantDataNumeric<int32_t> &>(*other.m_dataptr));
       break;
     case constant_tag::Float:
-      m_dataptr = std::make_unique<ConstantDataNumeric<float>>(dynamic_cast<ConstantDataNumeric<float> &>(*other.m_dataptr));
+      m_dataptr =
+          std::make_unique<ConstantDataNumeric<float>>(dynamic_cast<ConstantDataNumeric<float> &>(*other.m_dataptr));
       break;
     case constant_tag::Long:
-      m_dataptr = std::make_unique<ConstantDataNumeric<int64_t>>(dynamic_cast<ConstantDataNumeric<int64_t> &>(*other.m_dataptr));
+      m_dataptr = std::make_unique<ConstantDataNumeric<int64_t>>(
+          dynamic_cast<ConstantDataNumeric<int64_t> &>(*other.m_dataptr));
       break;
     case constant_tag::Double:
-      m_dataptr = std::make_unique<ConstantDataNumeric<double>>(dynamic_cast<ConstantDataNumeric<double> &>(*other.m_dataptr));
+      m_dataptr =
+          std::make_unique<ConstantDataNumeric<double>>(dynamic_cast<ConstantDataNumeric<double> &>(*other.m_dataptr));
       break;
     case constant_tag::FieldReference:
     case constant_tag::MethodReference:
@@ -153,7 +160,8 @@ ConstantInfo &ConstantInfo::operator=(const ConstantInfo &other) noexcept
       m_dataptr = std::make_unique<ConstantDataDescriptor>(dynamic_cast<ConstantDataDescriptor &>(*other.m_dataptr));
       break;
     case constant_tag::MethodHandle:
-      m_dataptr = std::make_unique<ConstantDataMethodHandle>(dynamic_cast<ConstantDataMethodHandle &>(*other.m_dataptr));
+      m_dataptr =
+          std::make_unique<ConstantDataMethodHandle>(dynamic_cast<ConstantDataMethodHandle &>(*other.m_dataptr));
       break;
     case constant_tag::Dynamic:
     case constant_tag::InvokeDynamic:

@@ -36,6 +36,12 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(ldecomp_def ${ldecomp_def} -DDEBUG)
 endif ()
 
+include(TestBigEndian)
+TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
+if(IS_BIG_ENDIAN)
+    set(ldecomp_def ${ldecomp_def} -DSYS_BIG_ENDIAN)
+endif()
+
 add_executable(ldecomp main.cpp ${ldecomp_sources})
 target_link_libraries(ldecomp PRIVATE project_options project_warnings ${ldecomp_libs})
 target_compile_definitions(ldecomp PRIVATE ${ldecomp_def})

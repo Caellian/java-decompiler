@@ -2,9 +2,9 @@ add_custom_target(fuzz_tests)
 
 add_executable(fuzz_tester fuzz_tester.cpp)
 target_link_libraries(fuzz_tester PRIVATE project_options project_warnings CONAN_PKG::fmt -coverage
-        -fsanitize=fuzzer,undefined,address)
+        -fsanitize=fuzzer)
 target_compile_options(fuzz_tester
-        PRIVATE -fsanitize=fuzzer,undefined,address)
+        PRIVATE -fsanitize=fuzzer)
 add_dependencies(fuzz_tests fuzz_tester)
 
 # Allow short runs during automated testing to see if something new breaks

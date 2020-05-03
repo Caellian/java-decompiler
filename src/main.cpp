@@ -55,7 +55,7 @@ int main(int argc, const char **argv) // temporary NOLINT(bugprone-exception-esc
 
   for (const auto &it : util::string::split_string(args["<files>"].asString(), ';'))
   {
-    if (it.ends_with(".jar"))
+    if (util::string::ends_with(it, ".jar"))
     {
       spdlog::info("Processing file: {}", it);
       auto jar = JarFile(it);
@@ -77,49 +77,45 @@ int main(int argc, const char **argv) // temporary NOLINT(bugprone-exception-esc
       */
 
       auto files = jar.files();
-//      auto iter = std::find_if(files.begin(), files.end(), [](const auto &f){
-//        return f.ends_with(".class");
-//      });
-      for (const auto &file_name : files)
+      auto iter = std::find_if(files.begin(), files.end(), [](const auto &f) {
+        return util::string::ends_with(f, ".class");
+      });
+      for (; iter != files.end(); iter++)
       {
-        if (file_name.ends_with(".class"))
+        spdlog::info("\t- {}", *iter);
+        auto class_stream = jar.openBinaryFile(*iter).value();
+        auto cf = std::move(ClassFile().parse(class_stream));
+
+        spdlog::info("Class: {}", cf.thisName());
+        for (const auto &m : cf.methods())
         {
-          spdlog::info("\t- {}", file_name);
-          auto class_stream = jar.openBinaryFile(file_name).value();
-          auto cf = std::move(ClassFile().parse(class_stream));
-
-          spdlog::info("Class: {}", cf.thisName());
-          for (const auto &m: cf.methods())
+          spdlog::info("\tMethod: {}, desc: {}", m.name(), m.descriptor());
+          for (const auto &a : m.attributes())
           {
-            spdlog::info("\tMethod: {}, desc: {}", m.name(), m.descriptor());
-            for (const auto &a: m.attributes())
+            if (a.name() == "Code")
             {
-              if (a.name() == "Code")
+              // Following lines are here for development purposes
+              // There's a lot of linting errors which are being ignored
+              for (uint32_t i = 0; i < a.size(); ++i)
               {
-                // Following lines are here for development purposes
-                // There's a lot of linting errors which are being ignored
-                for (uint32_t i = 0; i < a.size(); ++i)
-                {
-                  printf("%02X ", a.data()[i]); // NOLINT(hicpp-vararg)
+                printf("%02X ", a.data()[i]); // NOLINT(hicpp-vararg)
 
-                  if ((i + 1) % 16 == 0) // NOLINT(readability-magic-numbers)
-                  {
-                    printf("\n"); // NOLINT(hicpp-vararg)
-                  }
-                  else if ((i + 1) % 4 == 0) // NOLINT(readability-magic-numbers)
-                  {
-                    printf(" "); // NOLINT(hicpp-vararg)
-                  }
+                if ((i + 1) % 16 == 0) // NOLINT(readability-magic-numbers)
+                {
+                  printf("\n"); // NOLINT(hicpp-vararg)
                 }
-                printf("\n"); // NOLINT(hicpp-vararg)
+                else if ((i + 1) % 4 == 0) // NOLINT(readability-magic-numbers)
+                {
+                  printf(" "); // NOLINT(hicpp-vararg)
+                }
               }
+              printf("\n"); // NOLINT(hicpp-vararg)
             }
           }
-          break;
         }
       }
     }
-    else if (it.ends_with(".class"))
+    else if (util::string::ends_with(it, ".class"))
     {
       spdlog::info("- {}", it);
       std::ifstream content(it);

@@ -110,6 +110,30 @@ static inline std::string trim_copy(std::string s)
   return s;
 }
 
+bool ends_with(const std::string &tested, const std::string &end)
+{
+  if (tested.length() >= end.length())
+  {
+    return (0 == tested.compare(tested.length() - end.length(), end.length(), end));
+  }
+  else
+  {
+    return false;
+  }
+}
+
+bool starts_with(const std::string &tested, const std::string &beg)
+{
+  if (tested.length() >= beg.length())
+  {
+    return (0 == tested.compare(0, beg.length(), beg));
+  }
+  else
+  {
+    return false;
+  }
+}
+
 template <typename StringType> std::istream &getline(std::istream &is, StringType &t)
 {
   t.clear();
