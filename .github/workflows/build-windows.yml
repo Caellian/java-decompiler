@@ -32,5 +32,5 @@ jobs:
         run: cmake --build . --config "RelWithDebInfo"
       - uses: actions/upload-artifact@v1
         with:
-          name: ldecomp-windows-x64
+          name: ldecomp-windows-x64.exe
           path: bin/ldecomp.exe

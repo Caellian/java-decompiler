@@ -34,7 +34,8 @@ set(CONAN_REQUIRES
         docopt.cpp/0.6.2
         fmt/6.1.2
         spdlog/1.5.0
-        minizip/1.2.11)
+        minizip/1.2.11
+        )
 set(CONAN_OPTIONS "")
 include(cmake/Conan.cmake)
 run_conan()

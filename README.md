@@ -3,7 +3,6 @@
 ![MacOS CI](https://github.com/Caellian/java-decompiler/workflows/MacOS%20CI/badge.svg)
 ![Windows CI](https://github.com/Caellian/java-decompiler/workflows/Windows%20CI/badge.svg)
 ![Tests](https://github.com/Caellian/java-decompiler/workflows/Tests/badge.svg)
-![Sanitizers](https://github.com/Caellian/java-decompiler/workflows/Sanitizers/badge.svg)
 
 A modern and very efficient Java decompiler.
 

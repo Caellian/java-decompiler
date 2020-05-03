@@ -1,6 +1,0 @@
-[submodule "thirdparty/libzippp"]
-	path = thirdparty/libzippp
-	url = git@github.com:ctabin/libzippp.git
-[submodule "thirdparty/minizip"]
-	path = thirdparty/minizip
-	url = git@github.com:nmoinvaz/minizip.git
