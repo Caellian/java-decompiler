@@ -19,10 +19,10 @@
 #include "JarFile.hpp"
 
 #include "util/string.hpp"
+#include <algorithm>
 #include <cinttypes>
 #include <cstdio>
 #include <spdlog/spdlog.h>
-#include <algorithm>
 
 inline bool can_open_file(const std::string &file)
 {
@@ -199,7 +199,8 @@ SectionedPairs JarFile::manifest()
 
   auto mfso = openTextFile("META-INF/MANIFEST.MF");
 
-  if (!mfso.has_value()) {
+  if (!mfso.has_value())
+  {
     return manifest;
   }
 
@@ -212,8 +213,10 @@ SectionedPairs JarFile::manifest()
   std::string last_prop;
   while (util::string::getline(mfs, line))
   {
-    if (line.empty()) {
-      if (!section.empty()) {
+    if (line.empty())
+    {
+      if (!section.empty())
+      {
         manifest[section_name] = std::move(section);
 
         section_name = "";
@@ -223,22 +226,33 @@ SectionedPairs JarFile::manifest()
       continue;
     }
 
-    if (std::find(line.begin(), line.end(), ':') != line.end()) {
+    if (std::find(line.begin(), line.end(), ':') != line.end())
+    {
       auto tokens = util::string::split_string(line, ':');
       last_prop = util::string::trim(tokens[0]);
 
-      if (last_prop == "Name") {
+      if (last_prop == "Name")
+      {
         section_name = tokens[1].substr(1);
-      } else {
+      }
+      else
+      {
         section[last_prop] = tokens[1].substr(1);
       }
-    } else if (util::string::starts_with(line, " ")) { // assume continuation
-      if (last_prop == "Name") {
+    }
+    else if (util::string::starts_with(line, " "))
+    { // assume continuation
+      if (last_prop == "Name")
+      {
         section_name += util::string::trim(line);
-      } else {
+      }
+      else
+      {
         section[last_prop] += util::string::trim(line);
       }
-    } else {
+    }
+    else
+    {
       throw std::runtime_error("unable to parse manifest");
     }
   }

@@ -51,19 +51,32 @@ int main(int argc, const char **argv) // temporary NOLINT(bugprone-exception-esc
       docopt::docopt(USAGE, {std::next(argv), std::next(argv, argc)}, true, "Lunar Decompiler 0.0.1");
 
   std::string log_level = args["--log-level"].asString();
-  if (log_level == "trace") {
+  if (log_level == "trace")
+  {
     spdlog::set_level(spdlog::level::trace);
-  } else if (log_level == "debug") {
+  }
+  else if (log_level == "debug")
+  {
     spdlog::set_level(spdlog::level::debug);
-  } else if (log_level == "info") {
+  }
+  else if (log_level == "info")
+  {
     spdlog::set_level(spdlog::level::info);
-  } else if (log_level == "warn") {
+  }
+  else if (log_level == "warn")
+  {
     spdlog::set_level(spdlog::level::warn);
-  } else if (log_level == "error") {
+  }
+  else if (log_level == "error")
+  {
     spdlog::set_level(spdlog::level::err);
-  } else if (log_level == "critical") {
+  }
+  else if (log_level == "critical")
+  {
     spdlog::set_level(spdlog::level::critical);
-  } else if (log_level == "off") {
+  }
+  else if (log_level == "off")
+  {
     spdlog::set_level(spdlog::level::off);
   }
 
@@ -84,7 +97,8 @@ int main(int argc, const char **argv) // temporary NOLINT(bugprone-exception-esc
         spdlog::info("\t- {}", *iter);
 
         auto *class_stream = jar.openBinaryFile(*iter);
-        if (class_stream == nullptr) {
+        if (class_stream == nullptr)
+        {
           spdlog::warn("Unable to read {}", *iter);
           continue;
         }
@@ -128,8 +142,9 @@ int main(int argc, const char **argv) // temporary NOLINT(bugprone-exception-esc
     {
       spdlog::info("- {}", it);
 
-      std::ifstream input( it, std::ios::binary );
-      if (input.is_open()) {
+      std::ifstream input(it, std::ios::binary);
+      if (input.is_open())
+      {
         spdlog::error("Unable to open: {}", it);
         continue;
       }

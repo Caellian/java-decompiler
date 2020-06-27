@@ -20,7 +20,6 @@ set(ldecomp_sources ${ldecomp_sources}
         error/class_format_error.hpp
         error/file_error.hpp
         error/jar_error.hpp
-        format/source_language.hpp
         util/BinaryObjectBuffer.cpp
         util/BinaryObjectBuffer.hpp
         util/endian.hpp

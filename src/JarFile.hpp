@@ -25,11 +25,11 @@
 #include <filesystem>
 #include <map>
 #include <minizip/unzip.h>
+#include <mutex>
 #include <optional>
 #include <ostream>
 #include <utility>
 #include <vector>
-#include <mutex>
 
 const std::string manifest_main_section = "@[main_section]";
 using SectionedPairs = std::map<std::string, std::map<std::string, std::string>>;
@@ -39,14 +39,14 @@ class JarFile
   std::string m_absolute_path;
 
 public:
-  class iterator {
+  class iterator
+  {
   public:
     using iterator_category = std::forward_iterator_tag;
     using value_type = BinaryObjectBuffer;
     using difference_type = void;
-    using pointer = BinaryObjectBuffer*;
-    using reference = BinaryObjectBuffer&;
-
+    using pointer = BinaryObjectBuffer *;
+    using reference = BinaryObjectBuffer &;
   };
 
   explicit JarFile(const std::string &path) noexcept(false);

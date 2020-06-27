@@ -20,9 +20,9 @@
 #define LDECOMP_STRING_HPP
 
 #include <algorithm>
+#include <istream>
 #include <string>
 #include <vector>
-#include <istream>
 
 namespace util::string
 {

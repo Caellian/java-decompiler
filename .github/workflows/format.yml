@@ -28,7 +28,7 @@ jobs:
           sudo pip install cmake-format
       - name: Run cmake-format
         run: cmake-format -i -c ".cmake-format.yaml" $(find -iregex "./.*\.cmake" -or -name "CMakeLists.txt")
-      - uses: stefanzweifel/git-auto-commit-action@v4.1.2
+      - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Applied automatic formatting
           branch: ${{ github.head_ref }}

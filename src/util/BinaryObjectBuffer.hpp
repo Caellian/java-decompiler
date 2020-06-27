@@ -20,7 +20,6 @@
 #define LDECOMP_BINARYOBJECTBUFFER_HPP
 
 #include "endian.hpp"
-#include <bits/ios_base.h>
 #include <cstdlib>
 
 /**
