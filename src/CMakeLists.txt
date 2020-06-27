@@ -1,5 +1,6 @@
 set(ldecomp_sources ${ldecomp_sources}
-        class/access_flags.hpp
+        JarFile.cpp
+        JarFile.hpp
         class/AttributeInfo.cpp
         class/AttributeInfo.hpp
         class/ClassFile.cpp
@@ -8,20 +9,22 @@ set(ldecomp_sources ${ldecomp_sources}
         class/ConstantData.hpp
         class/ConstantInfo.cpp
         class/ConstantInfo.hpp
-        class/constant_tag.cpp
-        class/constant_tag.hpp
         class/MemberInfo.cpp
         class/MemberInfo.hpp
+        class/access_flags.hpp
+        class/constant_tag.cpp
+        class/constant_tag.hpp
         class/method_handle.cpp
         class/method_handle.hpp
         class/tag_traits.hpp
         error/class_format_error.hpp
         error/file_error.hpp
         error/jar_error.hpp
-        JarFile.cpp
-        JarFile.hpp
+        format/source_language.hpp
+        util/BinaryObjectBuffer.cpp
+        util/BinaryObjectBuffer.hpp
         util/endian.hpp
-        util/objstream.hpp
+        util/string.cpp
         util/string.hpp
         )
 
@@ -44,7 +47,9 @@ endif()
 
 add_executable(ldecomp main.cpp ${ldecomp_sources})
 target_link_libraries(ldecomp PRIVATE project_options project_warnings ${ldecomp_libs})
+
 target_compile_definitions(ldecomp PRIVATE ${ldecomp_def})
+
 target_include_directories(ldecomp PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/ldecomp>
         $<INSTALL_INTERFACE:include/ldecomp>)

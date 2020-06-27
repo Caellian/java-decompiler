@@ -19,7 +19,7 @@
 #ifndef LDECOMP_ATTRIBUTEINFO_HPP
 #define LDECOMP_ATTRIBUTEINFO_HPP
 
-#include "../util/objstream.hpp"
+#include "../util/BinaryObjectBuffer.hpp"
 #include "ClassFile.hpp"
 #include <memory>
 #include <string>
@@ -29,12 +29,16 @@ class ClassFile;
 
 class AttributeInfo
 {
-  std::string m_name;
+protected:
+  std::string m_name {};
   uint32_t m_size {};
   uint8_t *m_data = nullptr;
 
 public:
-  AttributeInfo() = default;
+  AttributeInfo() noexcept = default;
+  AttributeInfo(std::string name, uint32_t data_size, const uint8_t *data);
+  AttributeInfo(BinaryObjectBuffer &file_stream, const ClassFile *class_file) noexcept(false);
+
   AttributeInfo(AttributeInfo &&other) noexcept;
   AttributeInfo(const AttributeInfo &other) noexcept;
   ~AttributeInfo() noexcept;
@@ -42,7 +46,7 @@ public:
   AttributeInfo &operator=(const AttributeInfo &other) noexcept;
   AttributeInfo &operator=(AttributeInfo &&other) noexcept;
 
-  AttributeInfo &parse(util::IObjStream &file_stream, const ClassFile *class_file) noexcept(false);
+  AttributeInfo &parse(BinaryObjectBuffer &file_stream, const ClassFile *class_file) noexcept(false);
 
   [[nodiscard]] const std::string &name() const
   {

@@ -20,30 +20,47 @@
 #define LDECOMP_JARFILE_HPP
 
 #include "error/jar_error.hpp"
-#include "util/objstream.hpp"
+#include "util/BinaryObjectBuffer.hpp"
 
 #include <filesystem>
+#include <map>
 #include <minizip/unzip.h>
 #include <optional>
+#include <ostream>
 #include <utility>
 #include <vector>
+#include <mutex>
+
+const std::string manifest_main_section = "@[main_section]";
+using SectionedPairs = std::map<std::string, std::map<std::string, std::string>>;
 
 class JarFile
 {
-  std::string absolute_path;
+  std::string m_absolute_path;
 
 public:
-  JarFile() = default;
-  explicit JarFile(const std::string &path) noexcept(false);
+  class iterator {
+  public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = BinaryObjectBuffer;
+    using difference_type = void;
+    using pointer = BinaryObjectBuffer*;
+    using reference = BinaryObjectBuffer&;
 
-  JarFile &open(const std::string &path) noexcept(false);
-  [[nodiscard]] std::string getPath() const
-  {
-    return absolute_path;
   };
 
+  explicit JarFile(const std::string &path) noexcept(false);
+
+  [[nodiscard]] const std::string &path() const
+  {
+    return m_absolute_path;
+  };
+
+  [[nodiscard]] SectionedPairs manifest();
+
   [[nodiscard]] std::optional<std::istringstream> openTextFile(const std::string &jar_path) noexcept;
-  [[nodiscard]] std::optional<util::IObjStream> openBinaryFile(const std::string &jar_path) noexcept;
+  [[nodiscard]] BinaryObjectBuffer *openBinaryFile(const std::string &jar_path) noexcept;
+
   [[nodiscard]] std::vector<std::string> files()
       const; // TODO: Return an iterator. This consumes a lot of memory with large archives.
 };

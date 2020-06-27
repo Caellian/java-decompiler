@@ -19,7 +19,7 @@
 #ifndef LDECOMP_MEMBERINFO_HPP
 #define LDECOMP_MEMBERINFO_HPP
 
-#include "../util/objstream.hpp"
+#include "../util/BinaryObjectBuffer.hpp"
 #include "AttributeInfo.hpp"
 #include "ConstantInfo.hpp"
 #include <bitset>
@@ -33,15 +33,16 @@ const size_t field_access_size = 16;
 
 class MemberInfo
 {
-  std::bitset<field_access_size> m_access_flags {};
+  std::bitset<field_access_size> m_access_flags;
   std::string m_name;
   std::string m_descriptor;
   std::vector<AttributeInfo> m_attributes;
 
 public:
-  MemberInfo() noexcept = default;
+  MemberInfo(std::bitset<field_access_size> access_flags, std::string name, std::string descriptor);
+  MemberInfo(BinaryObjectBuffer &file_stream, const ClassFile *class_file) noexcept(false);
 
-  MemberInfo &parse(util::IObjStream &file_stream, const ClassFile *class_file) noexcept(false);
+  MemberInfo &parse(BinaryObjectBuffer &file_stream, const ClassFile *class_file) noexcept(false);
 
   [[nodiscard]] const std::bitset<field_access_size> &access_flags() const
   {

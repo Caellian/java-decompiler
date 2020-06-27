@@ -27,6 +27,13 @@ const uint8_t int8_width = 8;
 
 namespace util::endian
 {
+enum class Endianness
+{
+  BigEndian,
+  LittleEndian,
+};
+// Middle endian is out of scope
+
 template <typename Type> constexpr Type &reverse(Type &of)
 {
   Type ref(of);

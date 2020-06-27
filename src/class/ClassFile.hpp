@@ -19,7 +19,7 @@
 #ifndef LDECOMP_CLASSFILE_HPP
 #define LDECOMP_CLASSFILE_HPP
 
-#include "../util/objstream.hpp"
+#include "../util/BinaryObjectBuffer.hpp"
 #include "AttributeInfo.hpp"
 #include "ConstantData.hpp"
 #include "ConstantInfo.hpp"
@@ -33,7 +33,7 @@
 class MemberInfo;
 class AttributeInfo;
 
-const size_t class_access_size = 16;
+const std::size_t class_access_size = 16;
 
 class ClassFile
 {
@@ -53,6 +53,8 @@ class ClassFile
 
 public:
   ClassFile() noexcept = default;
+  explicit ClassFile(BinaryObjectBuffer &file_stream) noexcept(false);
+  explicit ClassFile(BinaryObjectBuffer &&file_stream);
   ClassFile(const ClassFile &other) noexcept;
   ClassFile(ClassFile &&other) noexcept;
   ~ClassFile() noexcept;
@@ -60,9 +62,9 @@ public:
   ClassFile &operator=(const ClassFile &other) noexcept;
   ClassFile &operator=(ClassFile &&other) noexcept;
 
-  ClassFile &parse(util::IObjStream &file_stream) noexcept(false);
+  ClassFile &parse(BinaryObjectBuffer &file_stream) noexcept(false);
 
-  template <typename ReadType> void readConstant(uint16_t index, ReadType &into) const
+  template <typename ReadType> ReadType readConstant(uint16_t index) const
   {
     index--;
     using traits = tag_primitive_traits<ReadType>;
@@ -71,23 +73,33 @@ public:
       throw std::logic_error(
           fmt::format("invalid constant pool index ({}), should be in range [1,{})", index, m_constant_pool_size));
     }
-    if (m_constant_pool[index].tag() != tag_primitive_traits<ReadType>::tag)
+    if (m_constant_pool[index].tag() != traits::tag)
     {
       throw std::runtime_error(fmt::format("invalid constant pool tag type ({}), expected {}",
                                            constant_tag_name(m_constant_pool[index].tag()),
                                            constant_tag_name(traits::tag)));
     }
-    into = dynamic_cast<const typename traits::data_class *>(m_constant_pool[index].data())->value();
+    return dynamic_cast<const typename traits::data_class *>(m_constant_pool[index].data())->value();
   }
 
-  template <typename ReadType> void readConstant(const ConstantDataReference *ref, ReadType &into) const
+  template <typename ReadType> ReadType readConstant(const ConstantDataReference *ref) const
   {
     if (ref == nullptr)
     {
       throw std::runtime_error("accessed reference is null");
     }
     auto index = ref->value();
-    return readConstant(index, into);
+    return readConstant<ReadType>(index);
+  }
+
+  template <typename ReadType> void readConstant(uint16_t index, ReadType &into) const
+  {
+    into = readConstant<ReadType>(index);
+  }
+
+  template <typename ReadType> void readConstant(const ConstantDataReference *ref, ReadType &into) const
+  {
+    into = readConstant<ReadType>(ref);
   }
 
   [[nodiscard]] uint16_t minorVersion() const

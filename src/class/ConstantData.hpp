@@ -19,7 +19,7 @@
 #ifndef LDECOMP_CONSTANTDATA_HPP
 #define LDECOMP_CONSTANTDATA_HPP
 
-#include "../util/objstream.hpp"
+#include "../util/BinaryObjectBuffer.hpp"
 #include "method_handle.hpp"
 
 struct ConstantData
@@ -79,7 +79,7 @@ public:
 class ConstantDataUtf8 : public ConstantDataWrapper<std::string>
 {
 public:
-  explicit ConstantDataUtf8(util::IObjStream &file_stream);
+  explicit ConstantDataUtf8(BinaryObjectBuffer &file_stream);
   ConstantDataUtf8(const ConstantDataUtf8 &other) noexcept;
   ConstantDataUtf8(ConstantDataUtf8 &&other) noexcept;
   ~ConstantDataUtf8() override = default;
@@ -96,9 +96,9 @@ public:
 template <typename NumericType> class ConstantDataNumeric : public ConstantDataWrapper<NumericType>
 {
 public:
-  explicit ConstantDataNumeric(util::IObjStream &file_stream)
+  explicit ConstantDataNumeric(BinaryObjectBuffer &file_stream)
   {
-    file_stream.read(this->m_value);
+    file_stream.read_obj(this->m_value);
   }
 
   [[nodiscard]] std::string string() const override
@@ -110,7 +110,7 @@ public:
 class ConstantDataReference : public ConstantDataWrapper<uint16_t>
 {
 public:
-  explicit ConstantDataReference(util::IObjStream &file_stream);
+  explicit ConstantDataReference(BinaryObjectBuffer &file_stream);
 
   [[nodiscard]] std::string string() const override
   {
@@ -124,7 +124,7 @@ class ConstantDataTypeSpec : public ConstantData
   uint16_t m_name_and_type_index {};
 
 public:
-  explicit ConstantDataTypeSpec(util::IObjStream &file_stream);
+  explicit ConstantDataTypeSpec(BinaryObjectBuffer &file_stream);
 
   [[nodiscard]] uint16_t classIndex() const
   {
@@ -146,7 +146,7 @@ class ConstantDataDescriptor : public ConstantData
   uint16_t m_descriptor_index {};
 
 public:
-  explicit ConstantDataDescriptor(util::IObjStream &file_stream);
+  explicit ConstantDataDescriptor(BinaryObjectBuffer &file_stream);
 
   [[nodiscard]] uint16_t nameIndex() const
   {
@@ -169,7 +169,7 @@ class ConstantDataMethodHandle : public ConstantData
   uint16_t m_ref_index {};
 
 public:
-  explicit ConstantDataMethodHandle(util::IObjStream &file_stream);
+  explicit ConstantDataMethodHandle(BinaryObjectBuffer &file_stream);
 
   [[nodiscard]] method_handle_kind referenceKind() const
   {
@@ -191,7 +191,7 @@ class ConstantDataDynamic : public ConstantData
   uint16_t m_name_and_type_index {};
 
 public:
-  explicit ConstantDataDynamic(util::IObjStream &file_stream);
+  explicit ConstantDataDynamic(BinaryObjectBuffer &file_stream);
 
   [[nodiscard]] uint16_t attributeIndex() const
   {

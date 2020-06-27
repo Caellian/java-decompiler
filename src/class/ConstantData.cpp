@@ -18,12 +18,11 @@
 
 #include "ConstantData.hpp"
 
-ConstantDataUtf8::ConstantDataUtf8(util::IObjStream &file_stream)
+ConstantDataUtf8::ConstantDataUtf8(BinaryObjectBuffer &file_stream)
 {
   uint16_t length {};
-  file_stream.read(length);
-  m_value.resize(length);
-  file_stream.read(m_value, length);
+  file_stream.read_obj(length);
+  file_stream.read_string(m_value, length);
 }
 
 ConstantDataUtf8::ConstantDataUtf8(const ConstantDataUtf8 &other) noexcept : ConstantDataWrapper(other)
@@ -54,33 +53,38 @@ ConstantDataUtf8 &ConstantDataUtf8::operator=(ConstantDataUtf8 &&other) noexcept
   return *this;
 }
 
-ConstantDataMethodHandle::ConstantDataMethodHandle(util::IObjStream &file_stream)
+ConstantDataMethodHandle::ConstantDataMethodHandle(BinaryObjectBuffer &file_stream)
 {
   uint8_t kindRead {};
-  file_stream.read(kindRead);
+  file_stream.read_obj(kindRead);
   m_ref_kind = static_cast<method_handle_kind>(kindRead);
-  file_stream.read(m_ref_index);
+  file_stream.read_obj(m_ref_index);
 }
 
-ConstantDataReference::ConstantDataReference(util::IObjStream &file_stream)
+ConstantDataReference::ConstantDataReference(BinaryObjectBuffer &file_stream)
 {
-  file_stream.read(this->m_value);
+  file_stream.read_obj(this->m_value);
 }
 
-ConstantDataTypeSpec::ConstantDataTypeSpec(util::IObjStream &file_stream)
+// These can be defined as for instance:
+// ConstantDataTypeSpec::ConstantDataTypeSpec(BinaryObjectBuffer &file_stream):
+//    m_class_index(file_stream.read_obj<uint16_t>()), m_name_and_type_index(file_stream.read_obj<uint16_t>()) {}
+// but that would make their deserialization order member variable declaration dependant
+
+ConstantDataTypeSpec::ConstantDataTypeSpec(BinaryObjectBuffer &file_stream)
 {
-  file_stream.read(m_class_index);
-  file_stream.read(m_name_and_type_index);
+  file_stream.read_obj(m_class_index);
+  file_stream.read_obj(m_name_and_type_index);
 }
 
-ConstantDataDescriptor::ConstantDataDescriptor(util::IObjStream &file_stream)
+ConstantDataDescriptor::ConstantDataDescriptor(BinaryObjectBuffer &file_stream)
 {
-  file_stream.read(m_name_index);
-  file_stream.read(m_descriptor_index);
+  file_stream.read_obj(m_name_index);
+  file_stream.read_obj(m_descriptor_index);
 }
 
-ConstantDataDynamic::ConstantDataDynamic(util::IObjStream &file_stream)
+ConstantDataDynamic::ConstantDataDynamic(BinaryObjectBuffer &file_stream)
 {
-  file_stream.read(m_bootstrap_method_attr_index);
-  file_stream.read(m_name_and_type_index);
+  file_stream.read_obj(m_bootstrap_method_attr_index);
+  file_stream.read_obj(m_name_and_type_index);
 }

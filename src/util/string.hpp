@@ -19,8 +19,10 @@
 #ifndef LDECOMP_STRING_HPP
 #define LDECOMP_STRING_HPP
 
+#include <algorithm>
 #include <string>
 #include <vector>
+#include <istream>
 
 namespace util::string
 {
@@ -69,14 +71,15 @@ template <typename StringType> std::vector<std::string> inline split_string(cons
   return res;
 }
 
-static inline void ltrim(std::string &s)
+static inline std::string &ltrim(std::string &s)
 {
   s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
             return !static_cast<bool>(std::isspace(ch));
           }));
+  return s;
 }
 
-static inline void rtrim(std::string &s)
+static inline std::string &rtrim(std::string &s)
 {
   s.erase(std::find_if(s.rbegin(), s.rend(),
                        [](int ch) {
@@ -84,12 +87,14 @@ static inline void rtrim(std::string &s)
                        })
               .base(),
           s.end());
+  return s;
 }
 
-static inline void trim(std::string &s)
+static inline std::string &trim(std::string &s)
 {
   ltrim(s);
   rtrim(s);
+  return s;
 }
 
 static inline std::string ltrim_copy(std::string s)
@@ -110,29 +115,9 @@ static inline std::string trim_copy(std::string s)
   return s;
 }
 
-bool ends_with(const std::string &tested, const std::string &end)
-{
-  if (tested.length() >= end.length())
-  {
-    return (0 == tested.compare(tested.length() - end.length(), end.length(), end));
-  }
-  else
-  {
-    return false;
-  }
-}
+bool ends_with(const std::string &tested, const std::string &end);
 
-bool starts_with(const std::string &tested, const std::string &beg)
-{
-  if (tested.length() >= beg.length())
-  {
-    return (0 == tested.compare(0, beg.length(), beg));
-  }
-  else
-  {
-    return false;
-  }
-}
+bool starts_with(const std::string &tested, const std::string &beg);
 
 template <typename StringType> std::istream &getline(std::istream &is, StringType &t)
 {

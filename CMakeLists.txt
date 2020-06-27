@@ -30,10 +30,10 @@ if(ENABLE_PCH)
 endif()
 
 set(CONAN_REQUIRES
-        catch2/2.11.0
+        catch2/2.12.2
         docopt.cpp/0.6.2
-        fmt/6.1.2
-        spdlog/1.5.0
+        fmt/6.2.1
+        spdlog/1.6.1
         minizip/1.2.11
         )
 set(CONAN_OPTIONS "")

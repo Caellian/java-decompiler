@@ -22,10 +22,15 @@
 
 #include <cstdlib>
 
-ConstantInfo &ConstantInfo::parse(util::IObjStream &file_stream) noexcept(false)
+ConstantInfo::ConstantInfo(BinaryObjectBuffer &file_stream)
+{
+  parse(file_stream);
+}
+
+ConstantInfo &ConstantInfo::parse(BinaryObjectBuffer &file_stream) noexcept(false)
 {
   uint8_t tagVal {};
-  file_stream.read(tagVal);
+  file_stream.read_obj(tagVal);
   m_tag = static_cast<constant_tag>(tagVal);
 
   switch (m_tag)

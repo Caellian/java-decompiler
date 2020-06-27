@@ -19,7 +19,7 @@
 #ifndef LDECOMP_CONSTANTINFO_HPP
 #define LDECOMP_CONSTANTINFO_HPP
 
-#include "../util/objstream.hpp"
+#include "../util/BinaryObjectBuffer.hpp"
 #include "ConstantData.hpp"
 #include "constant_tag.hpp"
 #include "method_handle.hpp"
@@ -35,6 +35,7 @@ class ConstantInfo
 
 public:
   ConstantInfo() noexcept = default;
+  explicit ConstantInfo(BinaryObjectBuffer &file_stream) noexcept(false);
   ConstantInfo(const ConstantInfo &other) noexcept;
   ConstantInfo(ConstantInfo &&other) noexcept;
   ~ConstantInfo() noexcept = default;
@@ -42,7 +43,7 @@ public:
   ConstantInfo &operator=(const ConstantInfo &other) noexcept;
   ConstantInfo &operator=(ConstantInfo &&other) noexcept;
 
-  ConstantInfo &parse(util::IObjStream &file_stream) noexcept(false);
+  ConstantInfo &parse(BinaryObjectBuffer &file_stream) noexcept(false);
 
   [[nodiscard]] constant_tag tag() const
   {

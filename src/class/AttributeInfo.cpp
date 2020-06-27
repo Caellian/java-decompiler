@@ -18,14 +18,27 @@
 
 #include "AttributeInfo.hpp"
 #include <cstring>
+#include <utility>
 
-AttributeInfo &AttributeInfo::parse(util::IObjStream &file_stream, const ClassFile *class_file) noexcept(false)
+AttributeInfo::AttributeInfo(std::string name, uint32_t data_size, const uint8_t *data)
+    : m_name(std::move(name)), m_size(data_size)
+{
+  m_data = new uint8_t[m_size];
+  memcpy(m_data, data, m_size);
+}
+
+AttributeInfo::AttributeInfo(BinaryObjectBuffer &file_stream, const ClassFile *class_file)
+{
+  parse(file_stream, class_file);
+}
+
+AttributeInfo &AttributeInfo::parse(BinaryObjectBuffer &file_stream, const ClassFile *class_file) noexcept(false)
 {
   uint16_t name_index {};
-  file_stream.read(name_index);
+  file_stream.read_obj(name_index);
   class_file->readConstant(name_index, m_name);
 
-  file_stream.read(m_size);
+  file_stream.read_obj(m_size);
 
   delete[] m_data; // delete old data if it's stored
   m_data = new uint8_t[m_size];

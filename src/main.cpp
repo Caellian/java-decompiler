@@ -30,18 +30,19 @@ static constexpr auto USAGE = R"(
 Lunar Decompiler.
 
     Usage:
-          ldecomp <files> [-l files]
-          ldecomp (-h | --help)
+          ldecomp [--log-level=LEVEL] <file>...
+          ldecomp -h | --help
           ldecomp --version
 
     Files:
-          Represents a semicolon (;) separated list of files. Both absolute
-          and relative paths are allowed.
+          Absolute or relative path to a .class or .jar file.
 
   Options:
-          -l --lib      Libraries to include in decompilation context.
-          -h --help     Show this screen.
-          --version     Show version.
+          --log-level=LEVEL  Set logging level. Can be trace, debug, info, warn, error,
+                             critical or off. [default: "info"]
+          -i --index=OUTPUT  Generate decompiled class index
+          -h --help          Show this screen and terminate the program.
+          --version          Show version and terminate the program.
 )";
 
 int main(int argc, const char **argv) // temporary NOLINT(bugprone-exception-escape)
@@ -49,44 +50,48 @@ int main(int argc, const char **argv) // temporary NOLINT(bugprone-exception-esc
   std::map<std::string, docopt::value> args =
       docopt::docopt(USAGE, {std::next(argv), std::next(argv, argc)}, true, "Lunar Decompiler 0.0.1");
 
-#ifdef DEBUG
-  spdlog::set_level(spdlog::level::debug);
-#endif
+  std::string log_level = args["--log-level"].asString();
+  if (log_level == "trace") {
+    spdlog::set_level(spdlog::level::trace);
+  } else if (log_level == "debug") {
+    spdlog::set_level(spdlog::level::debug);
+  } else if (log_level == "info") {
+    spdlog::set_level(spdlog::level::info);
+  } else if (log_level == "warn") {
+    spdlog::set_level(spdlog::level::warn);
+  } else if (log_level == "error") {
+    spdlog::set_level(spdlog::level::err);
+  } else if (log_level == "critical") {
+    spdlog::set_level(spdlog::level::critical);
+  } else if (log_level == "off") {
+    spdlog::set_level(spdlog::level::off);
+  }
 
-  for (const auto &it : util::string::split_string(args["<files>"].asString(), ';'))
+  for (const auto &it : args["<file>"].asStringList())
   {
     if (util::string::ends_with(it, ".jar"))
     {
       spdlog::info("Processing file: {}", it);
       auto jar = JarFile(it);
 
-      /* // Parsing Manifest files.
-      auto fs = jar.openTextFile("META-INF/MANIFEST.MF").value();
-
-      std::string line;
-      while (util::string::getline(fs, line))
-      {
-        if (line.empty())
-        {
-          continue;
-        }
-        auto tokens = util::string::split_string(line, ':');
-
-        spdlog::info("{}: {}", util::string::trim_copy(tokens[0]), util::string::trim_copy(tokens[1]));
-      }
-      */
-
       auto files = jar.files();
       auto iter = std::find_if(files.begin(), files.end(), [](const auto &f) {
         return util::string::ends_with(f, ".class");
       });
-      for (; iter != files.end(); iter++)
+
+      while (iter != files.end())
       {
         spdlog::info("\t- {}", *iter);
-        auto class_stream = jar.openBinaryFile(*iter).value();
-        auto cf = std::move(ClassFile().parse(class_stream));
+
+        auto *class_stream = jar.openBinaryFile(*iter);
+        if (class_stream == nullptr) {
+          spdlog::warn("Unable to read {}", *iter);
+          continue;
+        }
+        const auto cf = ClassFile(std::move(*class_stream));
 
         spdlog::info("Class: {}", cf.thisName());
+
         for (const auto &m : cf.methods())
         {
           spdlog::info("\tMethod: {}, desc: {}", m.name(), m.descriptor());
@@ -113,15 +118,22 @@ int main(int argc, const char **argv) // temporary NOLINT(bugprone-exception-esc
             }
           }
         }
+
+        iter = std::find_if(++iter, files.end(), [](const auto &f) {
+          return util::string::ends_with(f, ".class");
+        });
       }
     }
     else if (util::string::ends_with(it, ".class"))
     {
       spdlog::info("- {}", it);
-      std::ifstream content(it);
-      std::string content_string((std::istreambuf_iterator<char>(content)), std::istreambuf_iterator<char>());
-      auto cf = util::IObjStream(content_string);
-      ClassFile().parse(cf);
+
+      std::ifstream input( it, std::ios::binary );
+      if (input.is_open()) {
+        spdlog::error("Unable to open: {}", it);
+        continue;
+      }
+      auto cf = ClassFile(BinaryObjectBuffer(input));
     }
     else
     {

@@ -33,6 +33,9 @@
 - Provide option to preview pre-decompiled class structure (like javap)
 - Allow piping decompiled classes into stdout
 - Support for proguard generated mappings?
+- Allow verifying JARs signed with jarsigner
+    - https://docs.oracle.com/en/java/javase/14/docs/specs/man/jarsigner.html
+- Allow generating project which uses deobf sources of jar but doesn't distribute them
 
 ## Project
 
