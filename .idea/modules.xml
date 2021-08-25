@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Decompiler.iml" filepath="$PROJECT_DIR$/.idea/Decompiler.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/decompiler-rust.iml" filepath="$PROJECT_DIR$/.idea/decompiler-rust.iml" />
     </modules>
   </component>
 </project>

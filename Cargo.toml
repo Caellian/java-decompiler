@@ -1,0 +1,24 @@
+[package]
+name = "decompiler-rust"
+version = "0.1.0"
+authors = ["Tin Svagelj <tin.svagelj@live.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tracing = "0.1.26"
+thiserror = "1.0"
+
+paste = "1.0.5"
+
+byteorder = "1.4.3"
+bytemuck = "1.7.0"
+num_enum = "0.5"
+bitflags = "1.2"
+
+zip = "0.5.13"
+
+serde = { version="1.0", features=["derive"] }
+
+enum_dispatch = "0.3.7"
