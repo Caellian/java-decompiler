@@ -1,10 +1,10 @@
-use crate::class::Class;
-use crate::gen::CodeGenerator;
-use std::io::Write;
 use crate::class::access_flags::AccessFlags;
 use crate::class::attribute::AttributeValue;
 use crate::class::op::Op;
+use crate::class::Class;
+use crate::gen::CodeGenerator;
 use std::convert::TryFrom;
+use std::io::Write;
 
 pub enum JavaVersion {
     Java17,
@@ -33,10 +33,7 @@ impl CodeGenerator for JavaGenerator {
 
     fn generate<W: Write>(&self, class: &Class, w: &mut W) -> Result<(), std::io::Error> {
         if self.header_message.is_some() {
-            let lines: Vec<&str> = self.header_message.as_ref()
-                .unwrap()
-                .split('\n')
-                .collect();
+            let lines: Vec<&str> = self.header_message.as_ref().unwrap().split('\n').collect();
 
             writeln!(w, "\\*")?;
             for l in lines {
@@ -103,7 +100,7 @@ impl CodeGenerator for JavaGenerator {
         tracing::trace!("Generating methods for {}", class_name);
         for m in &class.methods {
             if m.is_constructor() {
-                continue // TODO: Write
+                continue; // TODO: Write
             }
 
             if m.access_flags.contains(AccessFlags::PUBLIC) {
@@ -123,12 +120,14 @@ impl CodeGenerator for JavaGenerator {
             write!(w, " {}(", m.name)?;
             writeln!(w, ") {{")?;
 
-            let code = &m.attributes.iter().find(|a| a.name == "Code").unwrap().value;
+            let code = &m
+                .attributes
+                .iter()
+                .find(|a| a.name == "Code")
+                .unwrap()
+                .value;
             match code {
-                AttributeValue::Code {
-                    code,
-                    ..
-                } => {
+                AttributeValue::Code { code, .. } => {
                     let mut pos = 0;
                     while pos < code.len() {
                         let instruction = Op::try_from(code[pos]).unwrap();
@@ -144,12 +143,11 @@ impl CodeGenerator for JavaGenerator {
                         pos += 1 + argc;
                     }
                 }
-                _ => todo!("Return an error")
+                _ => todo!("Return an error"),
             }
 
             writeln!(w, "}}\n")?;
         }
-
 
         writeln!(w, "}}")?;
 

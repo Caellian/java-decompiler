@@ -1,9 +1,9 @@
 use crate::class::constant::{Constant, ConstantPool};
 use crate::error::AttributeReadError;
+use crate::ext::ReadByteVecExt;
 use byteorder::{ReadBytesExt, BE};
 use paste::paste;
 use std::io::{Cursor, Read};
-use crate::ext::ReadByteVecExt;
 
 macro_rules! flat_entry {
     ($name:ident {$($entry:ident:$entry_t:ty,)+}) => {

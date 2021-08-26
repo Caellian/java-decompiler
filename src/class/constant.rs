@@ -1,10 +1,10 @@
 use crate::error::ConstantReadError;
+use crate::ext::ReadByteVecExt;
 use byteorder::{ReadBytesExt, BE};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::io::Read;
-use crate::ext::ReadByteVecExt;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]

@@ -1,9 +1,9 @@
-use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::fmt::{Display, Formatter};
-use std::io::{Read, ErrorKind};
-use byteorder::ReadBytesExt;
-use std::convert::TryFrom;
 use crate::ext::ReadByteVecExt;
+use byteorder::ReadBytesExt;
+use num_enum::{IntoPrimitive, TryFromPrimitive};
+use std::convert::TryFrom;
+use std::fmt::{Display, Formatter};
+use std::io::{ErrorKind, Read};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
@@ -415,7 +415,7 @@ impl Op {
             Op::Swap => "swap",
         }
     }
-    
+
     pub fn argc(&self) -> usize {
         match self {
             Op::Aload => 1,
@@ -491,9 +491,6 @@ impl Instruction {
 
         let args = r.read_byte_vec(op.argc())?;
 
-        Ok(Instruction {
-            op,
-            args,
-        })
+        Ok(Instruction { op, args })
     }
 }

@@ -4,10 +4,10 @@ use std::env;
 pub mod class;
 pub mod dependency;
 pub mod error;
+pub mod ext;
 pub mod file;
 pub mod gen;
 pub mod model;
-pub mod ext;
 
 #[macro_use]
 extern crate bitflags;
@@ -25,5 +25,4 @@ fn main() {
         println!("Method: {}", m.name);
         println!("{:?}", m);
     }
-
 }

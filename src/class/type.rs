@@ -1,7 +1,7 @@
 use crate::class::ClassPath;
-use std::io::{Read, Cursor, Seek, SeekFrom};
-use byteorder::ReadBytesExt;
 use crate::error::JVMTypeError;
+use byteorder::ReadBytesExt;
+use std::io::{Cursor, Read, Seek, SeekFrom};
 
 #[derive(Debug, Clone)]
 pub enum JVMType {
@@ -41,11 +41,9 @@ impl JVMType {
                 }
 
                 JVMType::TClass(ClassPath::from_string(&reference))
-            },
-            '[' => {
-                JVMType::TArray(Box::new(JVMType::read_from(r)?))
-            },
-            _ => return Err(JVMTypeError::InvalidType { found: c })
+            }
+            '[' => JVMType::TArray(Box::new(JVMType::read_from(r)?)),
+            _ => return Err(JVMTypeError::InvalidType { found: c }),
         })
     }
 
@@ -62,7 +60,7 @@ impl JVMType {
     pub fn array_depth(&self) -> usize {
         match self {
             JVMType::TArray(inner) => 1 + inner.array_depth(),
-            _ => 0
+            _ => 0,
         }
     }
 
@@ -93,50 +91,50 @@ impl JVMType {
             JVMType::TByte => ClassPath {
                 package: vec!["java".to_string(), "lang".to_string()],
                 outer_classes: vec![],
-                name: "Byte".to_string()
+                name: "Byte".to_string(),
             },
             JVMType::TChar => ClassPath {
                 package: vec!["java".to_string(), "lang".to_string()],
                 outer_classes: vec![],
-                name: "Character".to_string()
+                name: "Character".to_string(),
             },
             JVMType::TDouble => ClassPath {
                 package: vec!["java".to_string(), "lang".to_string()],
                 outer_classes: vec![],
-                name: "Double".to_string()
+                name: "Double".to_string(),
             },
             JVMType::TFloat => ClassPath {
                 package: vec!["java".to_string(), "lang".to_string()],
                 outer_classes: vec![],
-                name: "Float".to_string()
+                name: "Float".to_string(),
             },
             JVMType::TInt => ClassPath {
                 package: vec!["java".to_string(), "lang".to_string()],
                 outer_classes: vec![],
-                name: "Integer".to_string()
+                name: "Integer".to_string(),
             },
             JVMType::TLong => ClassPath {
                 package: vec!["java".to_string(), "lang".to_string()],
                 outer_classes: vec![],
-                name: "Long".to_string()
+                name: "Long".to_string(),
             },
             JVMType::TShort => ClassPath {
                 package: vec!["java".to_string(), "lang".to_string()],
                 outer_classes: vec![],
-                name: "Short".to_string()
+                name: "Short".to_string(),
             },
             JVMType::TBoolean => ClassPath {
                 package: vec!["java".to_string(), "lang".to_string()],
                 outer_classes: vec![],
-                name: "Boolean".to_string()
+                name: "Boolean".to_string(),
             },
             JVMType::TVoid => ClassPath {
                 package: vec!["java".to_string(), "lang".to_string()],
                 outer_classes: vec![],
-                name: "Void".to_string()
+                name: "Void".to_string(),
             },
             JVMType::TClass(inner) => inner.clone(),
-            _ => return None
+            _ => return None,
         })
     }
 }

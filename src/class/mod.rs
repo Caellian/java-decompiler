@@ -25,7 +25,7 @@ pub enum SourceLanguage {
     Java,
     Kotlin,
     Scala,
-    Groovy
+    Groovy,
 }
 
 #[derive(Debug, Clone)]
@@ -89,7 +89,7 @@ impl ClassPath {
 
     pub fn is_in_java_lang(&self) -> bool {
         if self.package.len() != 2 {
-            return false
+            return false;
         }
 
         self.package[0] == "java" && self.package[1] == "lang"
@@ -220,7 +220,7 @@ impl Class {
             compiler_info: CompilerInfo {
                 major,
                 minor,
-                language: SourceLanguage::Java
+                language: SourceLanguage::Java,
             },
 
             access_flags,

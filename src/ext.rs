@@ -13,4 +13,4 @@ pub trait ReadByteVecExt: io::Read {
     }
 }
 
-impl <R: io::Read> ReadByteVecExt for R {}
+impl<R: io::Read> ReadByteVecExt for R {}

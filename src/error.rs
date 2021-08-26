@@ -16,15 +16,30 @@ pub enum ClassReadError {
     InvalidInterfaceReference,
 
     #[error(transparent)]
-    ConstantReadError { #[from] inner: ConstantReadError },
+    ConstantReadError {
+        #[from]
+        inner: ConstantReadError,
+    },
     #[error(transparent)]
-    AccessFlagError { #[from] inner: AccessFlagError },
+    AccessFlagError {
+        #[from]
+        inner: AccessFlagError,
+    },
     #[error(transparent)]
-    MemberReadError { #[from] inner: MemberReadError },
+    MemberReadError {
+        #[from]
+        inner: MemberReadError,
+    },
     #[error(transparent)]
-    AttributeReadError { #[from] inner: AttributeReadError },
+    AttributeReadError {
+        #[from]
+        inner: AttributeReadError,
+    },
     #[error(transparent)]
-    IOError { #[from] inner: std::io::Error },
+    IOError {
+        #[from]
+        inner: std::io::Error,
+    },
 }
 
 #[derive(Error, Debug)]
@@ -37,9 +52,15 @@ pub enum ConstantReadError {
     UnsupportedReferenceKind { value: u8 },
 
     #[error(transparent)]
-    UTF8ParseError { #[from] inner: std::string::FromUtf8Error },
+    UTF8ParseError {
+        #[from]
+        inner: std::string::FromUtf8Error,
+    },
     #[error(transparent)]
-    IOError { #[from] inner: std::io::Error },
+    IOError {
+        #[from]
+        inner: std::io::Error,
+    },
 }
 
 impl From<TryFromPrimitiveError<ConstantTag>> for ConstantReadError {
@@ -70,11 +91,20 @@ pub enum MemberReadError {
     InvalidDescType,
 
     #[error(transparent)]
-    AccessFlagError { #[from] inner: AccessFlagError },
+    AccessFlagError {
+        #[from]
+        inner: AccessFlagError,
+    },
     #[error(transparent)]
-    AttributeReadError { #[from] inner: AttributeReadError },
+    AttributeReadError {
+        #[from]
+        inner: AttributeReadError,
+    },
     #[error(transparent)]
-    IOError { #[from] inner: std::io::Error },
+    IOError {
+        #[from]
+        inner: std::io::Error,
+    },
 }
 
 #[derive(Error, Debug)]
@@ -83,7 +113,10 @@ pub enum AccessFlagError {
     InvalidValue { found: u16 },
 
     #[error(transparent)]
-    IOError { #[from] inner: std::io::Error },
+    IOError {
+        #[from]
+        inner: std::io::Error,
+    },
 }
 
 #[derive(Error, Debug)]
@@ -98,18 +131,22 @@ pub enum AttributeReadError {
     InvalidData,
 
     #[error(transparent)]
-    IOError { #[from] inner: std::io::Error },
+    IOError {
+        #[from]
+        inner: std::io::Error,
+    },
 }
 
 #[derive(Error, Debug)]
 pub enum JVMTypeError {
     #[error("invalid JVM type {found}")]
-    InvalidType {
-        found: char,
-    },
+    InvalidType { found: char },
 
     #[error(transparent)]
-    IOError { #[from] inner: std::io::Error },
+    IOError {
+        #[from]
+        inner: std::io::Error,
+    },
 }
 
 #[derive(Error, Debug)]
@@ -122,5 +159,8 @@ pub enum ManifestParseError {
     InvalidEntry,
 
     #[error(transparent)]
-    IOError { #[from] inner: std::io::Error },
+    IOError {
+        #[from]
+        inner: std::io::Error,
+    },
 }

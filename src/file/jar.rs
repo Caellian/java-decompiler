@@ -1,8 +1,8 @@
+use crate::class::Class;
+use crate::file::manifest::Manifest;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use zip::ZipArchive;
-use crate::file::manifest::Manifest;
-use crate::class::Class;
 
 #[derive(Debug)]
 pub struct Jar {
@@ -22,9 +22,7 @@ impl Jar {
         let (manifest, main_class) = {
             let mut mf_file = archive.by_name("META-INF/MANIFEST.MF")?;
             let manifest = match Manifest::read_from(&mut mf_file) {
-                Ok(m) => {
-                    Some(m)
-                }
+                Ok(m) => Some(m),
                 Err(err) => {
                     tracing::warn!("manifest parsing error: {}", err);
                     None
@@ -36,7 +34,6 @@ impl Jar {
             };
             (manifest, main_class)
         };
-
 
         Ok(Jar {
             path: path.as_ref().to_path_buf(),
@@ -98,30 +95,36 @@ impl Jar {
 pub struct Classes<'a> {
     pub over: &'a Jar,
     pub last: usize,
-    
+
     pub current: usize,
 }
 
-impl <'a> Iterator for Classes<'a> {
+impl<'a> Iterator for Classes<'a> {
     type Item = Class;
 
     fn next(&mut self) -> Option<Class> {
         if self.current > self.last {
-            return None
+            return None;
         }
 
         let file = match File::open(self.over.path.clone()) {
             Ok(f) => f,
             Err(err) => {
-                tracing::error!("Unable to open zip file while iterating over classes: {}", err);
-                return None
+                tracing::error!(
+                    "Unable to open zip file while iterating over classes: {}",
+                    err
+                );
+                return None;
             }
         };
         let mut archive = match ZipArchive::new(file) {
             Ok(a) => a,
             Err(err) => {
-                tracing::error!("Unable to open zip archive while iterating over classes: {}", err);
-                return None
+                tracing::error!(
+                    "Unable to open zip archive while iterating over classes: {}",
+                    err
+                );
+                return None;
             }
         };
 
@@ -129,8 +132,11 @@ impl <'a> Iterator for Classes<'a> {
             let mut zip_file = match archive.by_index(self.current) {
                 Ok(a) => a,
                 Err(err) => {
-                    tracing::error!("Unable to access file by index while iterating over classes: {}", err);
-                    return None
+                    tracing::error!(
+                        "Unable to access file by index while iterating over classes: {}",
+                        err
+                    );
+                    return None;
                 }
             };
 
@@ -141,12 +147,15 @@ impl <'a> Iterator for Classes<'a> {
                 let class = match Class::read_from(&mut zip_file) {
                     Ok(c) => c,
                     Err(err) => {
-                        tracing::error!("Unable to access file by index while iterating over classes: {}", err);
-                        return None
+                        tracing::error!(
+                            "Unable to access file by index while iterating over classes: {}",
+                            err
+                        );
+                        return None;
                     }
                 };
 
-                return Some(class)
+                return Some(class);
             }
         }
     }

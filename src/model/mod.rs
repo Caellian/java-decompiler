@@ -34,7 +34,7 @@ pub enum ControlFlow {
         content: ExpressionBlock,
         catch: HashMap<Type, ExpressionBlock>,
         finally: Option<ExpressionBlock>,
-    }
+    },
 }
 
 #[derive(Debug)]
@@ -47,13 +47,9 @@ pub struct Declaration {
 #[derive(Debug)]
 pub enum Expression {
     Assignment,
-    Literal {
-        value: u32,
-    },
+    Literal { value: u32 },
     FlowControl(Box<ControlFlow>),
 }
 
 #[derive(Debug)]
-pub struct ExpressionBlock {
-
-}
+pub struct ExpressionBlock {}

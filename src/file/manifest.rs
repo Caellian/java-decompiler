@@ -1,15 +1,13 @@
-use std::collections::HashMap;
-use std::io::{Read, BufRead, BufReader};
 use crate::error::ManifestParseError;
+use std::collections::HashMap;
+use std::io::{BufRead, BufReader, Read};
 
 #[derive(Debug, Clone)]
-pub struct Attributes (HashMap<String, String>);
+pub struct Attributes(HashMap<String, String>);
 
 impl Attributes {
     pub fn get(&self, key: &str) -> Option<&str> {
-        self.0
-            .get(key)
-            .map(|s| s.as_str())
+        self.0.get(key).map(|s| s.as_str())
     }
 }
 
@@ -37,7 +35,8 @@ impl Manifest {
                     main_section = Some(section.clone());
                 } else {
                     entries.insert(
-                        section.get("Name")
+                        section
+                            .get("Name")
                             .ok_or(ManifestParseError::InvalidEntry)?
                             .clone(),
                         Attributes(section.clone()),
@@ -58,27 +57,23 @@ impl Manifest {
                             Some(ref key) => {
                                 section.insert(
                                     key.clone(),
-                                    section.get(key)
-                                        .expect("previous key not set")
-                                        .clone() + appended.as_str()
+                                    section.get(key).expect("previous key not set").clone()
+                                        + appended.as_str(),
                                 );
                             }
                         }
 
-                        continue
-                    },
+                        continue;
+                    }
                     _ => {
                         let mut kv: Vec<&str> = l.split(": ").collect();
                         let key = kv.remove(0).to_string();
                         let value = kv.join("");
 
                         last_key = Some(key.clone());
-                        section.insert(
-                            key,
-                            value,
-                        );
+                        section.insert(key, value);
                     }
-                }
+                },
             }
         }
 
@@ -86,7 +81,8 @@ impl Manifest {
             main_section = Some(section.clone());
         } else {
             entries.insert(
-                section.get("Name")
+                section
+                    .get("Name")
                     .ok_or(ManifestParseError::InvalidEntry)?
                     .clone(),
                 Attributes(section.clone()),
@@ -100,14 +96,10 @@ impl Manifest {
     }
 
     pub fn get(&self, key: &str) -> Option<&str> {
-        self.main_section
-            .get(key)
+        self.main_section.get(key)
     }
 
     pub fn entry_get(&self, entry: &str, key: &str) -> Option<&str> {
-        self.entries
-            .get(entry)
-            .map(|a| a.get(key))
-            .flatten()
+        self.entries.get(entry).map(|a| a.get(key)).flatten()
     }
 }
