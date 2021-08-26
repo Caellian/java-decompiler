@@ -15,6 +15,7 @@ pub enum MethodHandle {
 }
 
 impl MethodHandle {
+    #[allow(dead_code)]
     fn name(&self) -> String {
         match self {
             MethodHandle::GetField => "GetField",

@@ -157,17 +157,17 @@ impl Descriptor {
             while next != ')' {
                 argument_types.push(JVMType::read_from(r)?);
                 next = r.read_u8()? as char;
-                r.seek(SeekFrom::Current(-1));
+                r.seek(SeekFrom::Current(-1))?;
             }
 
-            r.seek(SeekFrom::Current(1));
+            r.seek(SeekFrom::Current(1))?;
 
             Descriptor {
                 return_type: JVMType::read_from(r)?,
                 argument_types,
             }
         } else {
-            r.seek(SeekFrom::Current(-1));
+            r.seek(SeekFrom::Current(-1))?;
 
             Descriptor {
                 return_type: JVMType::read_from(r)?,

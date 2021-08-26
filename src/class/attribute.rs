@@ -61,6 +61,7 @@ flat_entry!(LocalVariableType {
     index: u16,
 });
 
+#[allow(dead_code)]
 pub struct Annotation {
     type_index: u16,
 }

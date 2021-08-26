@@ -6,5 +6,5 @@ pub mod java;
 pub trait CodeGenerator {
     const NAME: &'static str;
 
-    fn generate<W: Write>(&self, class: &Class, w: &mut W);
+    fn generate<W: Write>(&self, class: &Class, w: &mut W) -> Result<(), std::io::Error>;
 }
