@@ -43,7 +43,7 @@ pub struct ClassPath {
 }
 
 impl ClassPath {
-    pub fn from_string(name: &String) -> ClassPath {
+    pub fn from_string(name: &str) -> ClassPath {
         let mut package: Vec<String> = name.split('/').map(|s| s.to_string()).collect();
 
         let class = package.remove(package.len() - 1);
@@ -64,7 +64,7 @@ impl ClassPath {
 
     pub fn jar_path(&self) -> String {
         let mut builder = self.package.join("/");
-        if self.outer_classes.len() > 0 {
+        if !self.outer_classes.is_empty() {
             builder += self.outer_classes.join("$").as_str();
             builder += "$"
         }
@@ -76,13 +76,13 @@ impl ClassPath {
 
     pub fn full_path(&self) -> String {
         let mut builder: String = self.package.join(".");
-        if builder.len() > 0 {
+        if !builder.is_empty() {
             builder += ".";
         }
         for outer_c in &self.outer_classes {
             builder += format!("{}.", outer_c).as_str();
         }
-        builder += format!("{}", self.name).as_str();
+        builder += self.name.to_string().as_str();
 
         builder
     }

@@ -2,6 +2,7 @@ use crate::class::ClassPath;
 use crate::error::JVMTypeError;
 use byteorder::ReadBytesExt;
 use std::io::{Cursor, Read, Seek, SeekFrom};
+use std::str::FromStr;
 
 #[derive(Debug, Clone)]
 pub enum JVMType {
@@ -45,11 +46,6 @@ impl JVMType {
             '[' => JVMType::TArray(Box::new(JVMType::read_from(r)?)),
             _ => return Err(JVMTypeError::InvalidType { found: c }),
         })
-    }
-
-    pub fn from_str(value: &str) -> Result<JVMType, JVMTypeError> {
-        let mut c = Cursor::new(value);
-        JVMType::read_from(&mut c)
     }
 
     pub fn from_string(value: String) -> Result<JVMType, JVMTypeError> {
@@ -139,6 +135,15 @@ impl JVMType {
     }
 }
 
+impl FromStr for JVMType {
+    type Err = JVMTypeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut c = Cursor::new(s);
+        JVMType::read_from(&mut c)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Descriptor {
     return_type: JVMType,
@@ -174,13 +179,17 @@ impl Descriptor {
         })
     }
 
-    pub fn from_str(value: &str) -> Result<Descriptor, JVMTypeError> {
+    pub fn from_string(value: String) -> Result<Descriptor, JVMTypeError> {
         let mut c = Cursor::new(value);
         Descriptor::read_from(&mut c)
     }
+}
 
-    pub fn from_string(value: String) -> Result<Descriptor, JVMTypeError> {
-        let mut c = Cursor::new(value);
+impl FromStr for Descriptor {
+    type Err = JVMTypeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut c = Cursor::new(s);
         Descriptor::read_from(&mut c)
     }
 }

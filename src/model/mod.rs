@@ -12,7 +12,7 @@ pub enum ControlFlow {
     If {
         condition: Expression,
         content: ExpressionBlock,
-        else_ifs: Vec<Box<ControlFlow>>,
+        else_ifs: Vec<ControlFlow>,
         else_block: Option<ExpressionBlock>,
     },
     While {

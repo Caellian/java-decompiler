@@ -30,7 +30,7 @@ impl Manifest {
         for line in mf_reader.lines() {
             let l = line.unwrap();
 
-            if l.len() == 0 {
+            if l.is_empty() {
                 if main_section.is_none() {
                     main_section = Some(section.clone());
                 } else {
@@ -78,7 +78,7 @@ impl Manifest {
         }
 
         if main_section.is_none() {
-            main_section = Some(section.clone());
+            main_section = Some(section);
         } else {
             entries.insert(
                 section

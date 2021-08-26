@@ -153,7 +153,7 @@ impl AttributeValue {
                 let mut attributes = Vec::with_capacity(attributes_count);
 
                 for _ in 0..attributes_count {
-                    attributes.push(Attribute::read_from(&mut c, &constant_pool)?);
+                    attributes.push(Attribute::read_from(&mut c, constant_pool)?);
                 }
 
                 AttributeValue::Code {
@@ -270,7 +270,7 @@ impl Attribute {
 
         Ok(Attribute {
             name: name.clone(),
-            value: AttributeValue::from_name(name.as_str(), data.as_slice(), &constant_pool)?,
+            value: AttributeValue::from_name(name.as_str(), data.as_slice(), constant_pool)?,
         })
     }
 }

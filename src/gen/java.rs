@@ -44,7 +44,7 @@ impl CodeGenerator for JavaGenerator {
 
         let package_path = class.class_name.package_path();
 
-        if package_path.len() > 0 {
+        if !package_path.is_empty() {
             write!(w, "package {};\n\n", class.class_name.package_path())?;
         }
 
@@ -138,7 +138,7 @@ impl CodeGenerator for JavaGenerator {
                         for offset in 0..argc {
                             write!(w, " {}", code[pos + offset])?;
                         }
-                        writeln!(w, "")?;
+                        writeln!(w)?;
 
                         pos += 1 + argc;
                     }
@@ -151,6 +151,6 @@ impl CodeGenerator for JavaGenerator {
 
         writeln!(w, "}}")?;
 
-        return Ok(());
+        Ok(())
     }
 }

@@ -42,7 +42,7 @@ impl Member {
         let mut attributes = Vec::with_capacity(attrib_count);
 
         for _ in 0..attrib_count {
-            attributes.push(Attribute::read_from(r, &constant_pool)?);
+            attributes.push(Attribute::read_from(r, constant_pool)?);
         }
 
         Ok(Member {
