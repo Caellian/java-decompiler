@@ -1,5 +1,5 @@
-use crate::class::Class;
 use crate::file::manifest::Manifest;
+use jvm_class_format::Class;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use zip::ZipArchive;
@@ -8,8 +8,8 @@ use zip::ZipArchive;
 pub struct Jar {
     path: PathBuf,
 
-    manifest: Option<Manifest>,
-    main_class: Option<String>,
+    pub manifest: Option<Manifest>,
+    pub main_class: Option<String>,
 
     file_count: usize,
 }
@@ -111,7 +111,8 @@ impl<'a> Iterator for Classes<'a> {
             Ok(f) => f,
             Err(err) => {
                 tracing::error!(
-                    "Unable to open zip file while iterating over classes: {}",
+                    "unable to open zip file '{}'; error: {}",
+                    self.over.path.to_string_lossy(),
                     err
                 );
                 return None;
@@ -121,7 +122,8 @@ impl<'a> Iterator for Classes<'a> {
             Ok(a) => a,
             Err(err) => {
                 tracing::error!(
-                    "Unable to open zip archive while iterating over classes: {}",
+                    "unable to open zip archive ('{}'): {}",
+                    self.over.path.to_string_lossy(),
                     err
                 );
                 return None;
@@ -133,7 +135,8 @@ impl<'a> Iterator for Classes<'a> {
                 Ok(a) => a,
                 Err(err) => {
                     tracing::error!(
-                        "Unable to access file by index while iterating over classes: {}",
+                        "unable to open ZIP file entry with index {}: {}",
+                        self.current,
                         err
                     );
                     return None;
@@ -148,7 +151,8 @@ impl<'a> Iterator for Classes<'a> {
                     Ok(c) => c,
                     Err(err) => {
                         tracing::error!(
-                            "Unable to access file by index while iterating over classes: {}",
+                            "unable to read class '{}': {}",
+                            zip_file.name(),
                             err
                         );
                         return None;

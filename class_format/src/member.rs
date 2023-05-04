@@ -1,49 +1,47 @@
-use crate::class::access_flags::AccessFlags;
-use crate::class::attribute::Attribute;
-use crate::class::constant::{Constant, ConstantPool};
-use crate::error::MemberReadError;
+use crate::access_flags::AccessFlags;
+use crate::attribute::AttributeValue;
+use crate::constant::{Constant, ConstantPool};
+use crate::error::MemberError;
+use crate::Descriptor;
 use byteorder::{ReadBytesExt, BE};
+use std::collections::HashMap;
 use std::io::Read;
+use std::str::FromStr;
 
 #[derive(Debug, Clone)]
 pub struct Member {
     pub access_flags: AccessFlags,
     pub name: String,
-    pub descriptor: String, // TODO: Specialize
-    pub attributes: Vec<Attribute>,
+    pub descriptor: Descriptor, // TODO: Specialize
+    pub attributes: HashMap<String, AttributeValue>,
 }
 
 impl Member {
     pub fn read_from<R: Read>(
         r: &mut R,
         constant_pool: &ConstantPool,
-    ) -> Result<Member, MemberReadError> {
+    ) -> Result<Member, MemberError> {
         let access_flags = AccessFlags::read_from(r)?;
 
         let name_i = r.read_u16::<BE>()? as usize;
         let name = match constant_pool.get(&name_i) {
             Some(c) => match c {
                 Constant::Utf8 { value } => value.clone(),
-                _ => return Err(MemberReadError::InvalidNameType),
+                _ => return Err(MemberError::InvalidNameType),
             },
-            None => return Err(MemberReadError::NoMemberName),
+            None => return Err(MemberError::NoMemberName),
         };
 
         let desc_i = r.read_u16::<BE>()? as usize;
         let descriptor = match constant_pool.get(&desc_i) {
             Some(c) => match c {
-                Constant::Utf8 { value } => value.clone(),
-                _ => return Err(MemberReadError::InvalidDescType),
+                Constant::Utf8 { value } => Descriptor::from_str(&value).map_err(MemberError::from),
+                _ => Err(MemberError::InvalidDesc),
             },
-            None => return Err(MemberReadError::NoMemberDesc),
-        };
+            None => Err(MemberError::NoMemberDesc),
+        }?;
 
-        let attrib_count = r.read_u16::<BE>()? as usize;
-        let mut attributes = Vec::with_capacity(attrib_count);
-
-        for _ in 0..attrib_count {
-            attributes.push(Attribute::read_from(r, constant_pool)?);
-        }
+        let attributes = AttributeValue::read_all(r, Some(constant_pool))?;
 
         Ok(Member {
             access_flags,

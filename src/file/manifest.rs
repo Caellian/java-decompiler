@@ -100,6 +100,6 @@ impl Manifest {
     }
 
     pub fn entry_get(&self, entry: &str, key: &str) -> Option<&str> {
-        self.entries.get(entry).map(|a| a.get(key)).flatten()
+        self.entries.get(entry).and_then(|a| a.get(key))
     }
 }

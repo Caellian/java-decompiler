@@ -1,0 +1,20 @@
+[package]
+name = "jvm-class-format"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+byteorder = "1.4"
+
+num_enum = "0.6"
+bitflags = "2.2"
+
+ordered-float = "3.7"
+
+paste = "1.0"
+
+log = "0.4"
+
+thiserror = "1.0"

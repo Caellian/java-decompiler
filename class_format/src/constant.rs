@@ -1,12 +1,13 @@
-use crate::error::ConstantReadError;
+use crate::error::ConstantError;
 use crate::ext::ReadByteVecExt;
 use byteorder::{ReadBytesExt, BE};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use ordered_float::OrderedFloat;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::io::Read;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum ReferenceKind {
     GetField = 1,
@@ -20,7 +21,7 @@ pub enum ReferenceKind {
     InvokeInterface = 9,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum ConstantTag {
     Utf8 = 1,
@@ -43,7 +44,7 @@ pub enum ConstantTag {
     Package = 20,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Hash)]
 pub enum Constant {
     Class {
         name_index: u16,
@@ -67,13 +68,13 @@ pub enum Constant {
         value: i32,
     },
     Float {
-        value: f32,
+        value: OrderedFloat<f32>,
     },
     Long {
         value: i64,
     },
     Double {
-        value: f64,
+        value: OrderedFloat<f64>,
     },
     NameAndType {
         name_index: u16,
@@ -136,7 +137,7 @@ impl Constant {
         }
     }
 
-    pub fn read_from<R: Read>(r: &mut R) -> Result<Constant, ConstantReadError> {
+    pub fn read_from<R: Read>(r: &mut R) -> Result<Constant, ConstantError> {
         let tag = ConstantTag::try_from(r.read_u8()?)?;
 
         Ok(match tag {
@@ -158,13 +159,13 @@ impl Constant {
                 value: r.read_i32::<BE>()?,
             },
             ConstantTag::Float => Constant::Float {
-                value: r.read_f32::<BE>()?,
+                value: OrderedFloat::from(r.read_f32::<BE>()?),
             },
             ConstantTag::Long => Constant::Long {
                 value: r.read_i64::<BE>()?,
             },
             ConstantTag::Double => Constant::Double {
-                value: r.read_f64::<BE>()?,
+                value: OrderedFloat::from(r.read_f64::<BE>()?),
             },
             ConstantTag::Class => Constant::Class {
                 name_index: r.read_u16::<BE>()?,

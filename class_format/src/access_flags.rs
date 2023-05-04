@@ -1,7 +1,9 @@
 use crate::error::AccessFlagError;
 use byteorder::{ReadBytesExt, BE};
 use std::io::Read;
-bitflags! {
+
+bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy)]
     pub struct AccessFlags: u16 {
         /// Declared public; may be accessed from outside its package.
         const PUBLIC = 0x0001;
@@ -61,5 +63,11 @@ impl AccessFlags {
     pub fn read_from<R: Read>(r: &mut R) -> Result<AccessFlags, AccessFlagError> {
         let found = r.read_u16::<BE>()?;
         AccessFlags::from_bits(found).ok_or(AccessFlagError::InvalidValue { found })
+    }
+}
+
+impl Default for AccessFlags {
+    fn default() -> Self {
+        AccessFlags::empty()
     }
 }
