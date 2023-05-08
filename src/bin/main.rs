@@ -6,7 +6,7 @@ use std::io::Write;
 use java_decompiler::file::jar::Jar;
 use java_decompiler::gen::java::class::ClassContext;
 use java_decompiler::gen::java::JavaBackend;
-use java_decompiler::gen::Generate;
+use java_decompiler::gen::GenerateCode;
 use java_decompiler::gen::GeneratorBuilder;
 
 pub use jvm_class_format as class;
@@ -32,7 +32,7 @@ fn main() {
 
     let mut w = BufWriter::new(out);
 
-    JavaBackend::write_value(&lang, &mut ClassContext, &class, &mut w)
+    JavaBackend.write_value(&lang, &mut ClassContext, &class, &mut w)
         .expect("unable to generate class code");
 
     w.flush().expect("unable to flush");

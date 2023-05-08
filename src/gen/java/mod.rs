@@ -1,11 +1,11 @@
-use super::{Generate, GeneratorBackend};
+use super::{GenerateCode, GeneratorBackend};
 use jvm_class_format::{ClassPath, ConstantPool, JVMPrimitive, JVMType};
 use std::collections::HashSet;
 
 pub mod class;
+pub mod code;
 pub mod field;
 pub mod method;
-pub mod code;
 
 pub fn primitive_name(primitive: JVMPrimitive) -> &'static str {
     match primitive {
@@ -25,8 +25,9 @@ pub struct Type;
 
 pub struct TypeContext;
 
-impl Generate<JVMType, TypeContext> for JavaBackend {
+impl GenerateCode<JVMType, TypeContext> for JavaBackend {
     fn write_value<W: std::io::Write>(
+        &self,
         _lang: &Self::LanguageContext,
         _c: &TypeContext,
         input: &JVMType,

@@ -1,4 +1,5 @@
 use jvm_class_format::{
+    access_flags,
     attribute::{AsData, CodeData, MethodParameterData},
     AccessFlags, ClassPath, Constant, Member,
 };
@@ -6,7 +7,8 @@ use jvm_class_format::{
 use crate::gen::{
     java::TypeContext,
     java::{JavaBackend, JavaScopeRequirements},
-    Generate,
+    writer::Indented,
+    GenerateCode,
 };
 
 use super::code::CodeContext;
@@ -40,8 +42,9 @@ impl MethodContext {
     }
 }
 
-impl Generate<Member, MethodContext> for JavaBackend {
+impl GenerateCode<Member, MethodContext> for JavaBackend {
     fn write_value<W: std::io::Write>(
+        &self,
         lang: &Self::LanguageContext,
         ctx: &MethodContext,
         method: &Member,
@@ -56,8 +59,7 @@ impl Generate<Member, MethodContext> for JavaBackend {
         w.write_all(MethodContext::signature(method.access_flags).as_bytes())?;
 
         if !method.is_constructor() {
-            let (tn, method_req) =
-                JavaBackend::to_string(lang, &TypeContext, &method.descriptor.value)?;
+            let (tn, method_req) = self.generate(lang, &TypeContext, &method.descriptor.value)?;
             req.append(method_req.imports);
 
             write!(w, " {} {}(", tn, method.name)?;
@@ -77,16 +79,16 @@ impl Generate<Member, MethodContext> for JavaBackend {
             };
 
             for (i, arg) in method.descriptor.arguments.iter().enumerate() {
-                let (arg_type, tr) = JavaBackend::to_string(lang, &TypeContext, arg)?;
+                let (arg_type, tr) = self.generate(lang, &TypeContext, arg)?;
                 req.append(tr.imports);
 
                 let arg_name: String = if let Some(param) = params.and_then(|it| it.get(i)) {
-                    let flags = param.access_flags;
+                    // let flags = param.access_flags; // TODO: Check spec
 
                     if let Some(Constant::Utf8 { value }) = lang
                         .constant_pool
                         .as_ref()
-                        .and_then(|it| it.get(&(param.name_index as usize)))
+                        .and_then(|it| it.get(&param.name_index))
                     {
                         value.to_string()
                     } else {
@@ -111,7 +113,7 @@ impl Generate<Member, MethodContext> for JavaBackend {
             .as_data()
             .unwrap();
         let code_ctx = CodeContext::from(code);
-        let code_req = JavaBackend::write_value(lang, &code_ctx, &code.code, w)?;
+        let code_req = self.write_value(lang, &code_ctx, &code.code, w)?;
         req.append(code_req.imports);
 
         writeln!(w, "}}\n")?;

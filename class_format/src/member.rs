@@ -23,7 +23,7 @@ impl Member {
     ) -> Result<Member, MemberError> {
         let access_flags = AccessFlags::read_from(r)?;
 
-        let name_i = r.read_u16::<BE>()? as usize;
+        let name_i = r.read_u16::<BE>()?;
         let name = match constant_pool.get(&name_i) {
             Some(c) => match c {
                 Constant::Utf8 { value } => value.clone(),
@@ -32,7 +32,7 @@ impl Member {
             None => return Err(MemberError::NoMemberName),
         };
 
-        let desc_i = r.read_u16::<BE>()? as usize;
+        let desc_i = r.read_u16::<BE>()?;
         let descriptor = match constant_pool.get(&desc_i) {
             Some(c) => match c {
                 Constant::Utf8 { value } => Descriptor::from_str(&value).map_err(MemberError::from),

@@ -2,7 +2,7 @@ use jvm_class_format::{AccessFlags, Member};
 
 use crate::gen::{
     java::{JavaBackend, JavaScopeRequirements},
-    Generate,
+    GenerateCode,
 };
 
 pub struct FieldContext;
@@ -29,8 +29,9 @@ impl FieldContext {
     }
 }
 
-impl Generate<Member, FieldContext> for JavaBackend {
+impl GenerateCode<Member, FieldContext> for JavaBackend {
     fn write_value<W: std::io::Write>(
+        &self,
         lang: &Self::LanguageContext,
         _c: &FieldContext,
         field: &Member,
@@ -42,13 +43,13 @@ impl Generate<Member, FieldContext> for JavaBackend {
         w.write_all(b" ")?;
 
         let (type_name, type_req) =
-            JavaBackend::to_string(lang, &mut super::TypeContext, &field.descriptor.value)?;
+            self.generate(lang, &mut super::TypeContext, &field.descriptor.value)?;
         req.append(type_req.imports);
         w.write_all(type_name.as_bytes())?;
         w.write_all(b" ")?;
 
         w.write_all(field.name.as_bytes())?;
-        w.write_all(b";\n")?;
+        w.write(format!(";\n").as_bytes())?;
 
         Ok(req)
     }

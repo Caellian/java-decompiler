@@ -2,9 +2,10 @@ use jvm_class_format::{AccessFlags, Class};
 use std::io::{Cursor, Write};
 
 use crate::gen::{
-    java::{JavaBackend, JavaContext, JavaScopeRequirements},
     java::{field::FieldContext, method::MethodContext},
-    Generate,
+    java::{JavaBackend, JavaContext, JavaScopeRequirements},
+    writer::Indented,
+    GenerateCode,
 };
 
 pub struct ClassContext;
@@ -52,8 +53,9 @@ impl ClassContext {
     }
 }
 
-impl Generate<Class, ClassContext> for JavaBackend {
+impl GenerateCode<Class, ClassContext> for JavaBackend {
     fn write_value<W: std::io::Write>(
+        &self,
         lang: &JavaContext,
         _c: &ClassContext,
         class: &Class,
@@ -122,9 +124,17 @@ impl Generate<Class, ClassContext> for JavaBackend {
 
             tracing::debug!("Generating fields for {}", class_name);
 
+            let mut class_indent = Indented::new(
+                &mut w,
+                crate::gen::writer::IndentKind::Space(2),
+                1,
+                b"{",
+                b"}",
+            );
+
             for field in &class.fields {
                 let field_requirements =
-                    JavaBackend::write_value(&lang, &FieldContext, field, &mut w)?;
+                    self.write_value(&lang, &FieldContext, field, &mut class_indent)?;
                 req.append(field_requirements.imports);
             }
 
@@ -136,7 +146,7 @@ impl Generate<Class, ClassContext> for JavaBackend {
                     ..Default::default()
                 };
                 let method_requirements =
-                    JavaBackend::write_value(&lang, &method_ctx, method, &mut w)?;
+                    self.write_value(&lang, &method_ctx, method, &mut class_indent)?;
                 req.append(method_requirements.imports);
             }
 

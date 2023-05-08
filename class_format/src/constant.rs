@@ -214,4 +214,4 @@ impl Constant {
     }
 }
 
-pub type ConstantPool = HashMap<usize, Constant>;
+pub type ConstantPool = HashMap<u16, Constant>;

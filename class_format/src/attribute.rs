@@ -414,7 +414,7 @@ impl Attribute for SignatureData {
         r: &mut R,
         constant_pool: Option<&ConstantPool>,
     ) -> Result<Self, AttributeError> {
-        let index = r.read_u16::<BE>()? as usize;
+        let index = r.read_u16::<BE>()?;
         match constant_pool.and_then(|cp| cp.get(&index)) {
             Some(Constant::Utf8 { value }) => Ok(SignatureData {
                 signature: value.clone(),
@@ -515,7 +515,7 @@ impl AttributeValue {
         r: &mut R,
         constant_pool: Option<&ConstantPool>,
     ) -> Result<(String, AttributeValue), AttributeError> {
-        let name_i = r.read_u16::<BE>()? as usize;
+        let name_i = r.read_u16::<BE>()?;
         let name = match constant_pool.and_then(|cp| cp.get(&name_i)) {
             Some(c) => match c {
                 Constant::Utf8 { value } => value.clone(),

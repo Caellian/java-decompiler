@@ -224,10 +224,10 @@ fn name_from_class_index(
     constant_pool: &ConstantPool,
 ) -> Result<Option<ClassPath>, ClassReadError> {
     Ok(if index != 0 {
-        match constant_pool.get(&index) {
+        match constant_pool.get(&(index as u16)) {
             Some(it) => Some(match it {
-                Constant::Class { name_index } => match &constant_pool[&(*name_index as usize)] {
-                    Constant::Utf8 { value } => ClassPath::parse(value)?,
+                Constant::Class { name_index } => match constant_pool.get(name_index) {
+                    Some(Constant::Utf8 { value }) => ClassPath::parse(value)?,
                     _ => return Err(ClassReadError::InvalidClassReference),
                 },
                 _ => return Err(ClassReadError::InvalidClassReference),
@@ -259,7 +259,7 @@ impl Class {
             let const_info = Constant::read_from(r)?;
             let tag = const_info.tag();
 
-            constant_pool.insert(pos, const_info);
+            constant_pool.insert(pos as u16, const_info);
 
             pos += match tag {
                 ConstantTag::Long => 2,

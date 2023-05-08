@@ -32,12 +32,19 @@ log (INFO): a logging level, possible values are TRACE, INFO, WARN, ERROR
 
 use serde::{Serialize, Deserialize};
 
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Verbosity {
+    
+}
+
 // TODO: Clap
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Settings {
     pub project_name: Option<String>,
 
     pub sources: Vec<String>,
+
+    pub gen_verbosity: Verbosity,
 
     pub out: String,
 }

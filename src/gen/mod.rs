@@ -1,6 +1,8 @@
 use java::JavaGeneratorBuilder;
 use std::{io::Cursor, ops::Deref};
 
+use self::writer::Indented;
+
 pub mod java;
 pub mod writer;
 
@@ -52,22 +54,24 @@ impl<B: GeneratorBackend, R, E> From<(Result<R, E>, B::ScopeRequirements)>
     }
 }
 
-pub trait Generate<I, C = ()>: GeneratorBackend + Sized {
+pub trait GenerateCode<I, C = ()>: GeneratorBackend + Sized {
     fn write_value<W: std::io::Write>(
+        &self,
         lang: &Self::LanguageContext,
         ctx: &C,
         input: &I,
         w: &mut W,
     ) -> Result<Self::ScopeRequirements, std::io::Error>;
 
-    fn to_string(
+    fn generate(
+        &self,
         lang: &Self::LanguageContext,
         ctx: &C,
         input: &I,
     ) -> Result<(String, Self::ScopeRequirements), std::io::Error> {
         let mut buff = Vec::with_capacity(64);
         let mut w = Cursor::new(&mut buff);
-        let req = Self::write_value(lang, ctx, input, &mut w)?;
+        let req = self.write_value(lang, ctx, input, &mut w)?;
 
         let string = std::str::from_utf8(w.into_inner().as_slice())
             .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidData, err))?
