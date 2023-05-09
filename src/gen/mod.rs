@@ -1,16 +1,26 @@
 use java::JavaGeneratorBuilder;
 use std::{io::Cursor, ops::Deref};
 
-use self::writer::Indented;
-
 pub mod java;
-pub mod writer;
+pub mod indent;
 
-pub trait GeneratorBackend {
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
+pub enum GeneratorVerbosity {
+    /// Generate all expressions, including synthetic and implicit ones (e.g. `super()`)
+    All,
+    /// Generate clean, minimal sources that produce the same output classes
+    Clean
+    
+}
+
+pub trait GeneratorBackend: Sized {
     const NAME: &'static str;
 
     type LanguageContext;
     type ScopeRequirements: Default + Sized;
+
+    fn verbosity(&self) -> GeneratorVerbosity;
 }
 
 pub struct GeneratorResult<B: GeneratorBackend + Sized, R, E> {

@@ -15,7 +15,7 @@ pub struct Jar {
 }
 
 impl Jar {
-    pub fn new<T: AsRef<Path>>(path: T) -> Result<Jar, std::io::Error> {
+    pub fn open<T: AsRef<Path>>(path: T) -> Result<Jar, std::io::Error> {
         let file = File::open(path.as_ref())?;
         let mut archive = ZipArchive::new(file)?;
 
@@ -150,11 +150,7 @@ impl<'a> Iterator for Classes<'a> {
                 let class = match Class::read_from(&mut zip_file) {
                     Ok(c) => c,
                     Err(err) => {
-                        tracing::error!(
-                            "unable to read class '{}': {}",
-                            zip_file.name(),
-                            err
-                        );
+                        tracing::error!("unable to read class '{}': {}", zip_file.name(), err);
                         return None;
                     }
                 };

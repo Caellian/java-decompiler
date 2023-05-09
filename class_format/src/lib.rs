@@ -4,7 +4,9 @@ use byteorder::{ReadBytesExt, BE};
 use error::ClassPathError;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
-use std::io::Read;
+use std::fs::File;
+use std::io::{BufReader, Cursor, Read};
+use std::path::Path;
 
 pub use crate::access_flags::AccessFlags;
 pub use crate::attribute::Attribute;
@@ -240,6 +242,17 @@ fn name_from_class_index(
 }
 
 impl Class {
+    pub fn open(path: impl AsRef<Path>) -> Result<Class, ClassReadError> {
+        let mut file = File::open(path)?;
+        let mut r = BufReader::new(&mut file);
+        Class::read_from(&mut r)
+    }
+
+    pub fn read(bytes: impl AsRef<[u8]>) -> Result<Class, ClassReadError> {
+        let mut r = Cursor::new(bytes.as_ref());
+        Class::read_from(&mut r)
+    }
+
     pub fn read_from<R: Read>(r: &mut R) -> Result<Class, ClassReadError> {
         let magic_number = r.read_u32::<BE>()?;
         if magic_number != CLASS_SIGNATURE {
@@ -302,7 +315,7 @@ impl Class {
             methods.push(Member::read_from(r, &constant_pool)?);
         }
 
-        let mut attributes = AttributeValue::read_all(r, Some(&constant_pool))?;
+        let attributes = AttributeValue::read_all(r, Some(&constant_pool))?;
 
         // TODO: Detect source language
 

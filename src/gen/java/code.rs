@@ -1,38 +1,28 @@
-use std::collections::HashMap;
-
-use jvm_class_format::attribute::{AttributeValue, CodeData, ExceptionTableEntry};
+use jvm_class_format::attribute::CodeData;
 
 use crate::{
     gen::{GenerateCode, GeneratorBackend},
-    ir::{to_ir, Expression, RuntimeBase, EmptySuperCall, InstructionComment},
+    ir::{
+        decompile,
+        expression::{EmptySuperCall, Expression, InstructionComment},
+        frame::RuntimeBase,
+    },
 };
 
 use super::{JavaBackend, JavaContext, JavaScopeRequirements};
 
 #[derive(Debug, Clone, Copy)]
-pub struct CodeContext<'a> {
-    pub max_stack: usize,
-    pub max_locals: usize,
-    pub exception_table: &'a [ExceptionTableEntry],
-    pub attributes: &'a HashMap<String, AttributeValue>,
+pub struct MethodContext<'a> {
+    pub is_constructor: bool,
+
+    pub code: &'a CodeData,
 }
 
-impl<'a> From<&'a CodeData> for CodeContext<'a> {
-    fn from(value: &'a CodeData) -> Self {
-        CodeContext {
-            max_stack: value.max_stack,
-            max_locals: value.max_locals,
-            exception_table: &value.exception_table,
-            attributes: &value.attributes,
-        }
-    }
-}
-
-impl<'a, C: AsRef<[u8]>> GenerateCode<C, CodeContext<'a>> for JavaBackend {
+impl<'a, C: AsRef<[u8]>> GenerateCode<C, MethodContext<'a>> for JavaBackend {
     fn write_value<W: std::io::Write>(
         &self,
         lang: &JavaContext,
-        ctx: &CodeContext<'a>,
+        ctx: &MethodContext<'a>,
         code: &C,
         w: &mut W,
     ) -> Result<Self::ScopeRequirements, std::io::Error> {
@@ -46,7 +36,7 @@ impl<'a, C: AsRef<[u8]>> GenerateCode<C, CodeContext<'a>> for JavaBackend {
                 .clone(),
         };
 
-        let ir = to_ir(&runtime_pool, *ctx, code);
+        let ir = decompile(&runtime_pool, *ctx, code);
 
         for expression in ir {
             self.write_value(lang, ctx, &expression, w)?;
@@ -56,14 +46,15 @@ impl<'a, C: AsRef<[u8]>> GenerateCode<C, CodeContext<'a>> for JavaBackend {
     }
 }
 
-impl GenerateCode<Expression, CodeContext<'_>> for JavaBackend {
+impl GenerateCode<Expression, MethodContext<'_>> for JavaBackend {
     fn write_value<W: std::io::Write>(
         &self,
         lang: &Self::LanguageContext,
-        ctx: &CodeContext,
+        _ctx: &MethodContext,
         input: &Expression,
         w: &mut W,
     ) -> Result<Self::ScopeRequirements, std::io::Error> {
+        #[allow(unreachable_patterns)]
         match input {
             Expression::Comment(ic) => self.write_value(lang, &(), ic, w),
             Expression::Super(it) => self.write_value(lang, &(), it, w),
@@ -94,7 +85,7 @@ impl<B: GeneratorBackend> GenerateCode<InstructionComment> for B {
         input: &InstructionComment,
         w: &mut W,
     ) -> Result<Self::ScopeRequirements, std::io::Error> {
-        w.write(b"// ")?;
+        w.write(b"// asm: ")?;
         w.write(input.0.op.name().as_bytes())?;
         for arg in &input.0.args {
             write!(w, " 0x{:X}", *arg)?;

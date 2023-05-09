@@ -5,6 +5,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "java",
+      "name": "HelloWorld",
+      "request": "launch",
+      "mainClass": "tests.units.HelloWorld",
+      "projectName": "java-decompiler_8d168fe2"
+    },
+    {
       "type": "lldb",
       "request": "launch",
       "name": "Debug unit tests in library 'jvm-class-format'",

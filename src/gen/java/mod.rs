@@ -1,4 +1,4 @@
-use super::{GenerateCode, GeneratorBackend};
+use super::{indent::IndentKind, GenerateCode, GeneratorBackend, GeneratorVerbosity};
 use jvm_class_format::{ClassPath, ConstantPool, JVMPrimitive, JVMType};
 use std::collections::HashSet;
 
@@ -23,13 +23,11 @@ pub fn primitive_name(primitive: JVMPrimitive) -> &'static str {
 
 pub struct Type;
 
-pub struct TypeContext;
-
-impl GenerateCode<JVMType, TypeContext> for JavaBackend {
+impl GenerateCode<JVMType> for JavaBackend {
     fn write_value<W: std::io::Write>(
         &self,
         _lang: &Self::LanguageContext,
-        _c: &TypeContext,
+        _: &(),
         input: &JVMType,
         w: &mut W,
     ) -> Result<Self::ScopeRequirements, std::io::Error> {
@@ -82,11 +80,12 @@ pub enum JavaVersion {
     Java17,
     Java18,
     Java19,
+    Java20,
 }
 
 impl Default for JavaVersion {
     fn default() -> Self {
-        Self::Java18
+        Self::Java20
     }
 }
 
@@ -105,6 +104,11 @@ impl JavaGeneratorBuilder {
         self
     }
 
+    pub fn no_header(mut self) -> Self {
+        self.result.header_message = None;
+        self
+    }
+
     pub fn header(mut self, header: impl ToString) -> Self {
         self.result.header_message = Some(header.to_string());
         self
@@ -115,18 +119,12 @@ impl JavaGeneratorBuilder {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum Indentation {
-    Tabs,
-    Spaces(usize),
-}
-
 #[derive(Debug, Clone)]
 pub struct JavaContext {
     pub target_version: JavaVersion,
 
     pub header_message: Option<String>,
-    pub indentation: Indentation,
+    pub indentation: IndentKind,
 
     pub constant_pool: Option<ConstantPool>,
 }
@@ -134,6 +132,7 @@ pub struct JavaContext {
 #[derive(Debug, Default)]
 pub struct JavaScopeRequirements {
     pub imports: HashSet<ClassPath>,
+    pub language_level: JavaVersion,
 }
 
 impl JavaScopeRequirements {
@@ -146,11 +145,16 @@ impl JavaScopeRequirements {
 }
 
 pub struct JavaBackend;
+
 impl GeneratorBackend for JavaBackend {
     const NAME: &'static str = "Java";
 
     type LanguageContext = JavaContext;
     type ScopeRequirements = JavaScopeRequirements;
+
+    fn verbosity(&self) -> GeneratorVerbosity {
+        GeneratorVerbosity::All
+    }
 }
 
 impl Default for JavaContext {
@@ -160,7 +164,7 @@ impl Default for JavaContext {
             header_message: Some(
                 "Generated file - do not edit, your changes will be lost.".to_string(),
             ),
-            indentation: Indentation::Spaces(4),
+            indentation: IndentKind::Space(4),
             constant_pool: None,
         }
     }

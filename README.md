@@ -4,11 +4,12 @@
 
 A modern and very efficient Java decompiler.
 
-## State of the project
+## Developement
 
-It's in early phases of development.
-Currently, it reads class files properly and generates sources based on information present in them;
-still haven't started with decompilation, but the major pieces are now in place.
+It can read a decompile class files.
+Pattern matching doesn't cover all instructions yet so a lot of the output is commented out assembly.
+
+Most command line arguments aren't properly handled yet.
 
 ## JVM support status
 

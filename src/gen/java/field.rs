@@ -42,8 +42,7 @@ impl GenerateCode<Member, FieldContext> for JavaBackend {
         w.write_all(FieldContext::signature(field.access_flags).as_bytes())?;
         w.write_all(b" ")?;
 
-        let (type_name, type_req) =
-            self.generate(lang, &mut super::TypeContext, &field.descriptor.value)?;
+        let (type_name, type_req) = self.generate(lang, &(), &field.descriptor.value)?;
         req.append(type_req.imports);
         w.write_all(type_name.as_bytes())?;
         w.write_all(b" ")?;

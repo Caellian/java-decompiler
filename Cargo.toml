@@ -1,11 +1,12 @@
 [package]
-name = "java-decompiler"
+name = "jaded"
 version = "0.1.0"
+description = "Decompiler for Java programming language."
 authors = ["Tin Svagelj <tin.svagelj@live.com>"]
 edition = "2021"
 
 [[bin]]
-name = "java_decompiler"
+name = "jaded"
 path = "src/bin/main.rs"
 required-features = ["clap"]
 
@@ -27,4 +28,4 @@ zip = "0.6"
 
 serde = { version = "1.0", features = ["derive"] }
 
-clap = { version = "4.0", optional = true }
+clap = { version = "4.0", features = ["derive"], optional = true }

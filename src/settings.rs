@@ -1,3 +1,11 @@
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "clap", derive(clap::Args))]
+pub struct Settings {
+    pub project_name: Option<String>,
+}
+
 /*
 fernflower:
 rbr (1): hide bridge methods
@@ -29,22 +37,3 @@ nls (0): define new line character to be used for output. 0 - '\r\n' (Windows), 
 ind: indentation string (default is 3 spaces)
 log (INFO): a logging level, possible values are TRACE, INFO, WARN, ERROR
  */
-
-use serde::{Serialize, Deserialize};
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum Verbosity {
-    
-}
-
-// TODO: Clap
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Settings {
-    pub project_name: Option<String>,
-
-    pub sources: Vec<String>,
-
-    pub gen_verbosity: Verbosity,
-
-    pub out: String,
-}

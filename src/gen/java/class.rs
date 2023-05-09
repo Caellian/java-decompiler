@@ -2,66 +2,64 @@ use jvm_class_format::{AccessFlags, Class};
 use std::io::{Cursor, Write};
 
 use crate::gen::{
-    java::{field::FieldContext, method::MethodContext},
+    java::{field::FieldContext, method::ClassContext},
     java::{JavaBackend, JavaContext, JavaScopeRequirements},
-    writer::Indented,
+    indent::Indented,
     GenerateCode,
 };
 
-pub struct ClassContext;
+pub fn class_signature(access_flags: AccessFlags) -> String {
+    let mut parts = Vec::with_capacity(4);
 
-impl ClassContext {
-    pub fn signature(access_flags: AccessFlags) -> String {
-        let mut parts = Vec::with_capacity(4);
-
-        // visibility is one of following
-        if access_flags.contains(AccessFlags::PUBLIC) {
-            parts.push("public");
-        } else if access_flags.contains(AccessFlags::PROTECTED) {
-            parts.push("protected");
-        } else if access_flags.contains(AccessFlags::PRIVATE) {
-            parts.push("private");
-        }
-
-        // inner classes can be static
-        if access_flags.contains(AccessFlags::STATIC) {
-            parts.push("static");
-        }
-
-        // a class can be abstract
-        if access_flags.contains(AccessFlags::ABSTRACT) {
-            parts.push("abstract");
-        }
-
-        // class inheritance can be prevented
-        if access_flags.contains(AccessFlags::FINAL) {
-            parts.push("final");
-        }
-
-        // class type
-        if access_flags.contains(AccessFlags::ENUM) {
-            parts.push("enum");
-        } else if access_flags.contains(AccessFlags::INTERFACE) {
-            parts.push("interface");
-        } else if access_flags.contains(AccessFlags::ANNOTATION) {
-            parts.push("@interface");
-        } else {
-            parts.push("class");
-        }
-
-        parts.join(" ")
+    // visibility is one of following
+    if access_flags.contains(AccessFlags::PUBLIC) {
+        parts.push("public");
+    } else if access_flags.contains(AccessFlags::PROTECTED) {
+        parts.push("protected");
+    } else if access_flags.contains(AccessFlags::PRIVATE) {
+        parts.push("private");
     }
+
+    // inner classes can be static
+    if access_flags.contains(AccessFlags::STATIC) {
+        parts.push("static");
+    }
+
+    // a class can be abstract
+    if access_flags.contains(AccessFlags::ABSTRACT) {
+        parts.push("abstract");
+    }
+
+    // class inheritance can be prevented
+    if access_flags.contains(AccessFlags::FINAL) {
+        parts.push("final");
+    }
+
+    // class type
+    if access_flags.contains(AccessFlags::ENUM) {
+        parts.push("enum");
+    } else if access_flags.contains(AccessFlags::INTERFACE) {
+        parts.push("interface");
+    } else if access_flags.contains(AccessFlags::ANNOTATION) {
+        parts.push("@interface");
+    } else {
+        parts.push("class");
+    }
+
+    parts.join(" ")
 }
 
-impl GenerateCode<Class, ClassContext> for JavaBackend {
+impl GenerateCode<Class> for JavaBackend {
     fn write_value<W: std::io::Write>(
         &self,
         lang: &JavaContext,
-        _c: &ClassContext,
+        _: &(),
         class: &Class,
         w: &mut W,
     ) -> Result<Self::ScopeRequirements, std::io::Error> {
         let mut req = JavaScopeRequirements::default();
+
+        tracing::debug!("Generating class: {}", class.class_name);
 
         // TODO: don't clone constant_pool, pass it as a reference
         let lang = JavaContext {
@@ -93,7 +91,7 @@ impl GenerateCode<Class, ClassContext> for JavaBackend {
             let mut result = Vec::with_capacity(512);
             let mut w: Cursor<&mut Vec<u8>> = Cursor::new(&mut result);
 
-            w.write_all(ClassContext::signature(class.access_flags).as_bytes())?;
+            w.write_all(class_signature(class.access_flags).as_bytes())?;
 
             let class_name = class.class_name.clone();
             w.write_all(b" ")?;
@@ -122,11 +120,11 @@ impl GenerateCode<Class, ClassContext> for JavaBackend {
 
             // TODO: generate enum entries
 
-            tracing::debug!("Generating fields for {}", class_name);
+            tracing::debug!("- Generating fields for {}", class_name);
 
             let mut class_indent = Indented::new(
                 &mut w,
-                crate::gen::writer::IndentKind::Space(2),
+                lang.indentation,
                 1,
                 b"{",
                 b"}",
@@ -138,10 +136,10 @@ impl GenerateCode<Class, ClassContext> for JavaBackend {
                 req.append(field_requirements.imports);
             }
 
-            tracing::debug!("Generating methods for {}", class_name);
+            tracing::debug!("- Generating methods for {}", class_name);
 
             for method in &class.methods {
-                let method_ctx = MethodContext {
+                let method_ctx = ClassContext {
                     class_name: class.class_name.clone(),
                     ..Default::default()
                 };
@@ -164,6 +162,8 @@ impl GenerateCode<Class, ClassContext> for JavaBackend {
         w.write_all(b"\n")?;
 
         w.write_all(&delayed)?;
+
+        tracing::debug!("- Done.");
 
         Ok(req)
     }
