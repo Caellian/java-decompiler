@@ -77,7 +77,7 @@ pub trait Attribute: Into<AttributeValue> + Sized {
 
     fn read_data<R: std::io::Read>(
         r: &mut R,
-        constant_pool: Option<&ConstantPool>,
+        constant_pool: &ConstantPool,
     ) -> Result<Self, AttributeError>;
 }
 
@@ -100,7 +100,7 @@ impl Attribute for CodeData {
     #[inline]
     fn read_data<R: std::io::Read>(
         r: &mut R,
-        constant_pool: Option<&ConstantPool>,
+        constant_pool: &ConstantPool,
     ) -> Result<Self, AttributeError> {
         let max_stack = r.read_u16::<BE>()? as usize;
         let max_locals = r.read_u16::<BE>()? as usize;
@@ -153,7 +153,7 @@ impl Attribute for ExceptionData {
     #[inline]
     fn read_data<R: std::io::Read>(
         r: &mut R,
-        _constant_pool: Option<&ConstantPool>,
+        _constant_pool: &ConstantPool,
     ) -> Result<Self, AttributeError> {
         let number_of_exceptions = r.read_u16::<BE>()? as usize;
         let mut exceptions = Vec::with_capacity(number_of_exceptions);
@@ -192,7 +192,7 @@ impl Attribute for InnerClassData {
     #[inline]
     fn read_data<R: std::io::Read>(
         r: &mut R,
-        _constant_pool: Option<&ConstantPool>,
+        _constant_pool: &ConstantPool,
     ) -> Result<Self, AttributeError> {
         let number_of_classes = r.read_u16::<BE>()? as usize;
         let mut classes = Vec::with_capacity(number_of_classes);
@@ -231,7 +231,7 @@ impl Attribute for LineNumberTable {
     #[inline]
     fn read_data<R: std::io::Read>(
         r: &mut R,
-        _constant_pool: Option<&ConstantPool>,
+        _constant_pool: &ConstantPool,
     ) -> Result<Self, AttributeError> {
         let line_number_table_length = r.read_u16::<BE>()? as usize;
         let mut table = Vec::with_capacity(line_number_table_length);
@@ -269,7 +269,7 @@ impl Attribute for LocalVariableTable {
 
     fn read_data<R: std::io::Read>(
         r: &mut R,
-        _constant_pool: Option<&ConstantPool>,
+        _constant_pool: &ConstantPool,
     ) -> Result<Self, AttributeError> {
         let local_variable_table_length = r.read_u16::<BE>()? as usize;
         let mut table = Vec::with_capacity(local_variable_table_length);
@@ -307,7 +307,7 @@ impl Attribute for AnnotationDefaultData {
 
     fn read_data<R: std::io::Read>(
         r: &mut R,
-        _constant_pool: Option<&ConstantPool>,
+        _constant_pool: &ConstantPool,
     ) -> Result<Self, AttributeError> {
         let mut default = Vec::with_capacity(256);
         r.read_to_end(&mut default)?;
@@ -341,7 +341,7 @@ impl Attribute for EnclosingMethodData {
 
     fn read_data<R: std::io::Read>(
         r: &mut R,
-        _constant_pool: Option<&ConstantPool>,
+        _constant_pool: &ConstantPool,
     ) -> Result<Self, AttributeError> {
         Ok(EnclosingMethodData {
             class_index: r.read_u16::<BE>()? as usize,
@@ -375,7 +375,7 @@ impl Attribute for LocalVariableTypeTable {
 
     fn read_data<R: std::io::Read>(
         r: &mut R,
-        _constant_pool: Option<&ConstantPool>,
+        _constant_pool: &ConstantPool,
     ) -> Result<Self, AttributeError> {
         let local_variable_type_table_length = r.read_u16::<BE>()? as usize;
         let mut table = Vec::with_capacity(local_variable_type_table_length);
@@ -412,14 +412,15 @@ impl Attribute for SignatureData {
     const NAME: &'static str = "Signature";
     fn read_data<R: std::io::Read>(
         r: &mut R,
-        constant_pool: Option<&ConstantPool>,
+        constant_pool: &ConstantPool,
     ) -> Result<Self, AttributeError> {
-        let index = r.read_u16::<BE>()?;
-        match constant_pool.and_then(|cp| cp.get(&index)) {
-            Some(Constant::Utf8 { value }) => Ok(SignatureData {
+        let index = r.read_u16::<BE>()? as usize;
+
+        match constant_pool.try_get(index)? {
+            Constant::Utf8 { value } => Ok(SignatureData {
                 signature: value.clone(),
             }),
-            _ => return Err(AttributeError::MissingContant),
+            _ => return Err(AttributeError::InvalidData),
         }
     }
 }
@@ -449,7 +450,7 @@ impl Attribute for MethodParameterData {
 
     fn read_data<R: std::io::Read>(
         r: &mut R,
-        _constant_pool: Option<&ConstantPool>,
+        _constant_pool: &ConstantPool,
     ) -> Result<Self, AttributeError> {
         let length = r.read_u8()? as usize;
         let mut parameters = Vec::with_capacity(length);
@@ -513,15 +514,13 @@ pub enum AttributeValue {
 impl AttributeValue {
     pub fn read_from<R: std::io::Read>(
         r: &mut R,
-        constant_pool: Option<&ConstantPool>,
+        constant_pool: &ConstantPool,
     ) -> Result<(String, AttributeValue), AttributeError> {
-        let name_i = r.read_u16::<BE>()?;
-        let name = match constant_pool.and_then(|cp| cp.get(&name_i)) {
-            Some(c) => match c {
-                Constant::Utf8 { value } => value.clone(),
-                _ => return Err(AttributeError::InvalidNameType),
-            },
-            None => return Err(AttributeError::NoAttribName),
+        let name_i = r.read_u16::<BE>()? as usize;
+
+        let name = match constant_pool.try_get(name_i)? {
+            Constant::Utf8 { value } => value.clone(),
+            _ => return Err(AttributeError::InvalidNameType),
         };
 
         let length = r.read_u32::<BE>()? as usize;
@@ -534,7 +533,7 @@ impl AttributeValue {
 
     pub fn read_all<R: std::io::Read>(
         r: &mut R,
-        constant_pool: Option<&ConstantPool>,
+        constant_pool: &ConstantPool,
     ) -> Result<HashMap<String, AttributeValue>, AttributeError> {
         let attributes_count = r.read_u16::<BE>()? as usize;
         let mut attributes = HashMap::with_capacity(attributes_count);
@@ -550,7 +549,7 @@ impl AttributeValue {
     pub fn from_name_and_data(
         name: impl AsRef<str>,
         data: &[u8],
-        constant_pool: Option<&ConstantPool>,
+        constant_pool: &ConstantPool,
     ) -> Result<AttributeValue, AttributeError> {
         let mut r = Cursor::new(data);
 

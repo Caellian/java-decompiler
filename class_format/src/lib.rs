@@ -1,4 +1,4 @@
-use crate::error::ClassReadError;
+use crate::error::{ClassReadError, ConstantPoolError};
 use attribute::AttributeValue;
 use byteorder::{ReadBytesExt, BE};
 use error::ClassPathError;
@@ -197,6 +197,15 @@ impl ClassPath {
     }
 }
 
+impl TryFrom<&Constant> for ClassPath {
+    type Error = ClassPathError;
+
+    fn try_from(value: &Constant) -> Result<Self, Self::Error> {
+        constant_match!(value, Constant::Utf8 { value } => { ClassPath::parse(value)? })
+            .map_err(Into::into)
+    }
+}
+
 impl Display for ClassPath {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.full_path().as_str())
@@ -224,21 +233,21 @@ pub struct Class {
 fn name_from_class_index(
     index: usize,
     constant_pool: &ConstantPool,
-) -> Result<Option<ClassPath>, ClassReadError> {
-    Ok(if index != 0 {
-        match constant_pool.get(&(index as u16)) {
-            Some(it) => Some(match it {
-                Constant::Class { name_index } => match constant_pool.get(name_index) {
-                    Some(Constant::Utf8 { value }) => ClassPath::parse(value)?,
-                    _ => return Err(ClassReadError::InvalidClassReference),
-                },
-                _ => return Err(ClassReadError::InvalidClassReference),
-            }),
-            None => None,
+) -> Result<ClassPath, ClassReadError> {
+    log::trace!("enter name_from_class_index({}, &constant_pool)", index);
+    let constant = constant_pool.try_get(index)?;
+
+    match constant {
+        Constant::Class { name_index } => match constant_pool.try_get(*name_index as usize)? {
+            Constant::Utf8 { value } => Ok(ClassPath::parse(value)?),
+            _ => Err(ClassReadError::InvalidClassNameReference),
+        },
+        other => Err(ConstantPoolError::UnexpectedType {
+            found: other.tag(),
+            expected: ConstantTag::Class,
         }
-    } else {
-        None
-    })
+        .into()),
+    }
 }
 
 impl Class {
@@ -254,6 +263,8 @@ impl Class {
     }
 
     pub fn read_from<R: Read>(r: &mut R) -> Result<Class, ClassReadError> {
+        log::debug!("Reading class");
+
         let magic_number = r.read_u32::<BE>()?;
         if magic_number != CLASS_SIGNATURE {
             return Err(ClassReadError::InvalidMagic {
@@ -263,44 +274,60 @@ impl Class {
 
         let minor = r.read_u16::<BE>()?;
         let major = r.read_u16::<BE>()?;
+        log::trace!("Class::read_from(impl Read)::version = {}.{}", major, minor);
 
+        log::trace!("Class::read_from(impl Read)::constant_pool");
         let const_pool_size = r.read_u16::<BE>()? as usize;
         let mut constant_pool = ConstantPool::with_capacity(const_pool_size);
 
-        let mut pos = 1;
-        while pos < const_pool_size {
+        log::trace!(
+            "Class::read_from(impl Read)::constant_pool::max = {}",
+            const_pool_size
+        );
+        while constant_pool.size() < const_pool_size {
             let const_info = Constant::read_from(r)?;
             let tag = const_info.tag();
 
-            constant_pool.insert(pos as u16, const_info);
-
-            pos += match tag {
-                ConstantTag::Long => 2,
-                ConstantTag::Double => 2,
-                _ => 1,
-            };
+            let index = constant_pool.size();
+            constant_pool.insert(const_info);
+            log::trace!(
+                "index: {}, read tag: {:?}; length: {}",
+                index,
+                tag,
+                constant_pool.size()
+            );
         }
 
+        log::trace!("Class::read_from(impl Read)::access_flags");
         let access_flags = AccessFlags::read_from(r)?;
 
         let class_const_index = r.read_u16::<BE>()? as usize;
-        let class_name = name_from_class_index(class_const_index, &constant_pool)?
-            .ok_or(ClassReadError::NoClassName)?;
+        log::trace!(
+            "Class::try_from(impl Read)::class_name#{}",
+            class_const_index
+        );
+        let class_name = ClassPath::try_from(constant_pool.get(class_const_index))?;
 
+        log::trace!("Class::read_from(impl Read)::super_name");
         let super_const_index = r.read_u16::<BE>()? as usize;
-        let super_name = name_from_class_index(super_const_index, &constant_pool)?;
+        let super_name = if super_const_index != 0 {
+            Some(ClassPath::try_from(constant_pool.get(class_const_index))?)
+        } else {
+            None
+        };
 
+        log::trace!("Class::read_from(impl Read)::interfaces");
         let interface_count = r.read_u16::<BE>()? as usize;
         let mut interfaces = Vec::with_capacity(interface_count);
 
         for _ in 0..interface_count {
             let interface_index = r.read_u16::<BE>()? as usize;
-            let interface_name = name_from_class_index(interface_index, &constant_pool)?
-                .ok_or(ClassReadError::InvalidInterfaceReference)?;
+            let interface_name = name_from_class_index(interface_index, &constant_pool)?;
 
             interfaces.push(interface_name);
         }
 
+        log::trace!("Class::read_from(impl Read)::fields");
         let field_count = r.read_u16::<BE>()? as usize;
         let mut fields = Vec::with_capacity(interface_count);
 
@@ -308,16 +335,20 @@ impl Class {
             fields.push(Member::read_from(r, &constant_pool)?);
         }
 
+        log::trace!("Class::read_from(impl Read)::methods");
         let method_count = r.read_u16::<BE>()? as usize;
-        let mut methods = Vec::with_capacity(interface_count);
+        let mut methods = Vec::with_capacity(method_count);
 
         for _ in 0..method_count {
             methods.push(Member::read_from(r, &constant_pool)?);
         }
 
-        let attributes = AttributeValue::read_all(r, Some(&constant_pool))?;
+        log::trace!("Class::read_from(impl Read)::attributes");
+        let attributes = AttributeValue::read_all(r, &constant_pool)?;
 
         // TODO: Detect source language
+
+        log::trace!("leave Class::read_from(impl Read)");
 
         Ok(Class {
             compiler_info: CompilerInfo {

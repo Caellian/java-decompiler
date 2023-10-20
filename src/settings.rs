@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "clap", derive(clap::Args))]
 pub struct Settings {
+    
     pub project_name: Option<String>,
 }
 

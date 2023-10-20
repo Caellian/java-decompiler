@@ -23,14 +23,16 @@ struct Arguments {
 }
 
 fn main() {
-    tracing_subscriber::fmt()
-        .with_max_level(Level::DEBUG)
-        .init();
+    #[cfg(debug_assertions)]
+    let log_level = Level::DEBUG;
+    #[cfg(not(debug_assertions))]
+    let log_level = Level::INFO;
+
+    tracing_subscriber::fmt().with_max_level(log_level).init();
 
     let args = Arguments::parse();
 
     let class = Class::open(args.input).expect("can't open class");
-    println!("{}", class.class_name);
 
     let lang = GeneratorBuilder::java().build();
     let out = File::create(args.output).expect("unable to create output file");

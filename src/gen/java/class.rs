@@ -2,9 +2,9 @@ use jvm_class_format::{AccessFlags, Class};
 use std::io::{Cursor, Write};
 
 use crate::gen::{
+    indent::Indented,
     java::{field::FieldContext, method::ClassContext},
     java::{JavaBackend, JavaContext, JavaScopeRequirements},
-    indent::Indented,
     GenerateCode,
 };
 
@@ -122,18 +122,12 @@ impl GenerateCode<Class> for JavaBackend {
 
             tracing::debug!("- Generating fields for {}", class_name);
 
-            let mut class_indent = Indented::new(
-                &mut w,
-                lang.indentation,
-                1,
-                b"{",
-                b"}",
-            );
+            let mut class_indent = Indented::new(&mut w, lang.indentation, 1, b"{", b"}");
 
             for field in &class.fields {
                 let field_requirements =
                     self.write_value(&lang, &FieldContext, field, &mut class_indent)?;
-                req.append(field_requirements.imports);
+                req.add_import(field_requirements.imports);
             }
 
             tracing::debug!("- Generating methods for {}", class_name);
@@ -145,7 +139,7 @@ impl GenerateCode<Class> for JavaBackend {
                 };
                 let method_requirements =
                     self.write_value(&lang, &method_ctx, method, &mut class_indent)?;
-                req.append(method_requirements.imports);
+                req.add_import(method_requirements.imports);
             }
 
             w.write_all(b"}\n")?;

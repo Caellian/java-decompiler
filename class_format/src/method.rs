@@ -16,7 +16,7 @@ pub enum MethodHandle {
 
 impl MethodHandle {
     #[allow(dead_code)]
-    fn name(&self) -> String {
+    const fn name(&self) -> &'static str {
         match self {
             MethodHandle::GetField => "GetField",
             MethodHandle::GetStatic => "GetStatic",
@@ -28,6 +28,5 @@ impl MethodHandle {
             MethodHandle::NewInvokeSpecial => "NewInvokeSpecial",
             MethodHandle::InvokeInterface => "InvokeInterface",
         }
-        .to_string()
     }
 }

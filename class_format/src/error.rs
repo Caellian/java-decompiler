@@ -4,14 +4,27 @@ use crate::ConstantTag;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
+pub enum ConstantPoolError {
+    #[error("accessing invalid constant pool index: {index}; length: {length}")]
+    InvalidIndex { index: usize, length: usize },
+    #[error("unexpected constant type: {found:?}; expected {expected:?}")]
+    UnexpectedType {
+        found: ConstantTag,
+        expected: ConstantTag,
+    },
+}
+
+#[derive(Error, Debug)]
 pub enum ClassReadError {
     #[error("expected magic: 0xCAFEBABE; got 0x{found:X}")]
     InvalidMagic { found: u32 },
 
-    #[error("class name not found")]
-    NoClassName,
-    #[error("invalid reference to class constant or name constant")]
+    #[error(transparent)]
+    ConstantPoolIndex(#[from] ConstantPoolError),
+    #[error("invalid reference to class constant")]
     InvalidClassReference,
+    #[error("invalid reference to class name constant")]
+    InvalidClassNameReference,
     #[error("invalid reference to interface constant or name constant")]
     InvalidInterfaceReference,
 
@@ -35,7 +48,7 @@ pub enum AccessFlagError {
     #[error("received one or more unsupported access flags 0x{found:X}")]
     InvalidValue { found: u16 },
 
-    #[error(transparent)]
+    #[error("io error: {0}")]
     IOError(#[from] std::io::Error),
 }
 
@@ -50,9 +63,9 @@ pub enum ConstantError {
     #[error("invalid class path: {0}")]
     InvalidClassPath(String),
 
-    #[error(transparent)]
+    #[error("utf8 error: {0}")]
     UTF8ParseError(#[from] std::string::FromUtf8Error),
-    #[error(transparent)]
+    #[error("io error: {0}")]
     IOError(#[from] std::io::Error),
 }
 
@@ -80,13 +93,13 @@ pub enum MemberError {
     InvalidNameType,
     #[error("class member descriptor is pointing to a non-existent constant")]
     NoMemberDesc,
-    #[error("class member descriptor is invalid")]
-    InvalidDesc,
 
     #[error(transparent)]
     AccessFlagError(#[from] AccessFlagError),
     #[error(transparent)]
     AttributeReadError(#[from] AttributeError),
+    #[error(transparent)]
+    ConstantPool(#[from] ConstantPoolError),
     #[error(transparent)]
     JVMTypeError(#[from] JVMTypeError),
 
@@ -104,8 +117,8 @@ pub enum AttributeError {
     IncompleteData,
     #[error("attribute data is invalid")]
     InvalidData,
-    #[error("missing a referenced constant in constant pool")]
-    MissingContant,
+    #[error(transparent)]
+    ConstantPool(#[from] ConstantPoolError),
 
     #[error(transparent)]
     IOError(#[from] std::io::Error),
@@ -122,6 +135,9 @@ pub enum ClassPathError {
         identifier: String,
         reason: &'static str,
     },
+
+    #[error("constant pool error: {0}")]
+    ConstantPool(#[from] ConstantPoolError),
 
     #[error(transparent)]
     IOError(std::io::Error),

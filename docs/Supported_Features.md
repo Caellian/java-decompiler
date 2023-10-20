@@ -1,0 +1,4 @@
+- [x] Erasure of empty constructors
+- [ ] Erasure of synthetic functions
+- [ ] Modules
+- [ ] 

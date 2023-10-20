@@ -1,5 +1,6 @@
-use jvm_class_format::{Instruction, Op};
+use jvm_class_format::{attribute::CodeData, Instruction, Op};
 
+use super::frame::RuntimeFrame;
 
 pub struct OpSeq<const LENGTH: usize>(pub [Op; LENGTH]);
 
@@ -22,17 +23,23 @@ pub struct SeqVariants<const COUNT: usize, const LENGTH: usize>(pub [OpSeq<LENGT
 
 #[macro_export]
 macro_rules! test_many_expr {
-    (&[$first: ty $(,$other: ty) *], $instructions: expr, $offset: expr) => {
-        <$first>::test($instructions, $offset)$(
-            .or_else(|| <$other>::test($instructions, $offset)))*
+    (&[$first: ty $(,$other: ty) *], $instructions: expr, $offset: expr, $ctx: expr) => {
+        <$first>::test($instructions, $offset, $ctx)$(
+            .or_else(|| <$other>::test($instructions, $offset, $ctx)))*
     };
 }
 
 pub trait CheckExpression {
-    fn test(buffer: impl AsRef<[Instruction]>, offset: usize) -> Option<(usize, Expression)>;
+    fn test<'cp, 'code>(
+        buffer: impl AsRef<[Instruction]>,
+        offset: usize,
+        ctx: &RuntimeFrame<'cp, 'code>,
+    ) -> Option<(usize, Expression)>;
 }
 
 pub enum Expression {
+    EmptyConstructor(EmptyConstructor),
+    ReturnStatement(ReturnStatement),
     Super(EmptySuperCall),
     Comment(InstructionComment),
 }
@@ -41,7 +48,11 @@ pub enum Expression {
 pub struct InstructionComment(pub Instruction);
 
 impl CheckExpression for InstructionComment {
-    fn test(instr: impl AsRef<[Instruction]>, offset: usize) -> Option<(usize, Expression)> {
+    fn test<'cp, 'code>(
+        instr: impl AsRef<[Instruction]>,
+        offset: usize,
+        _: &RuntimeFrame<'cp, 'code>,
+    ) -> Option<(usize, Expression)> {
         unsafe {
             Some((
                 1,
@@ -53,13 +64,65 @@ impl CheckExpression for InstructionComment {
     }
 }
 
+pub struct EmptyConstructor;
+
+impl CheckExpression for EmptyConstructor {
+    fn test<'cp, 'code>(
+        buffer: impl AsRef<[Instruction]>,
+        offset: usize,
+        _: &RuntimeFrame<'cp, 'code>,
+    ) -> Option<(usize, Expression)> {
+        if buffer.as_ref().len() != 3 {
+            return None;
+        }
+
+        let result = OpSeq([
+            Op::Aload0,        // push this to stack
+            Op::Invokespecial, // call this.<init>
+            Op::Return,        // return with object on stack
+        ])
+        .test(buffer, 0);
+
+        if !result {
+            return None;
+        }
+
+        Some((3 - offset, Expression::EmptyConstructor(Self)))
+    }
+}
+
+pub struct ReturnStatement; 
+
+impl CheckExpression for ReturnStatement {
+    fn test<'cp, 'code>(
+        buffer: impl AsRef<[Instruction]>,
+        offset: usize,
+        _: &RuntimeFrame<'cp, 'code>,
+    ) -> Option<(usize, Expression)> {
+        let result = OpSeq([
+            Op::Return, // return with object on stack
+        ])
+        .test(buffer, offset);
+
+        if !result {
+            return None;
+        }
+
+        Some((1, Expression::ReturnStatement(Self)))
+    }
+}
+
 pub struct EmptySuperCall;
 
 impl CheckExpression for EmptySuperCall {
-    fn test(buffer: impl AsRef<[Instruction]>, offset: usize) -> Option<(usize, Expression)> {
+    fn test<'cp, 'code>(
+        buffer: impl AsRef<[Instruction]>,
+        offset: usize,
+        _: &RuntimeFrame<'cp, 'code>,
+    ) -> Option<(usize, Expression)> {
         let result = OpSeq([
-            Op::Aload0, // push this to stack
-            Op::Invokespecial,
+            Op::Aload0,        // push this to stack
+            Op::Invokespecial, // call <init>
         ])
         .test(buffer, offset);
 

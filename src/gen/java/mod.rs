@@ -48,7 +48,7 @@ impl GenerateCode<JVMType> for JavaBackend {
             }
             JVMType::TClassArray { depth, inner } => {
                 if !inner.is_in_java_lang() {
-                    req.append([inner.clone()]);
+                    req.add_import([inner.clone()]);
                 }
                 w.write_all(inner.name.as_bytes())?;
                 w.write_all("[]".repeat(*depth).as_bytes())?;
@@ -136,11 +136,15 @@ pub struct JavaScopeRequirements {
 }
 
 impl JavaScopeRequirements {
-    pub fn append<'a>(&mut self, imports: impl IntoIterator<Item = ClassPath> + 'a) {
+    pub fn add_import<'a>(&mut self, imports: impl IntoIterator<Item = ClassPath> + 'a) {
         let iter = imports.into_iter();
         for import in iter {
             self.imports.insert(import);
         }
+    }
+
+    pub fn include(&mut self, other: Self) {
+        self.add_import(other.imports);
     }
 }
 
@@ -152,8 +156,12 @@ impl GeneratorBackend for JavaBackend {
     type LanguageContext = JavaContext;
     type ScopeRequirements = JavaScopeRequirements;
 
+    #[rustfmt::skip]
     fn verbosity(&self) -> GeneratorVerbosity {
-        GeneratorVerbosity::All
+        #[cfg(debug_assertions)]
+        {GeneratorVerbosity::All}
+        #[cfg(not(debug_assertions))]
+        {GeneratorVerbosity::Clean}
     }
 }
 

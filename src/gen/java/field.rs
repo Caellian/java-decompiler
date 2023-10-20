@@ -43,7 +43,7 @@ impl GenerateCode<Member, FieldContext> for JavaBackend {
         w.write_all(b" ")?;
 
         let (type_name, type_req) = self.generate(lang, &(), &field.descriptor.value)?;
-        req.append(type_req.imports);
+        req.add_import(type_req.imports);
         w.write_all(type_name.as_bytes())?;
         w.write_all(b" ")?;
 

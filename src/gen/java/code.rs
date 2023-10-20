@@ -1,73 +1,36 @@
-use jvm_class_format::attribute::CodeData;
+use jvm_class_format::{attribute::CodeData, ConstantPool, Member};
 
 use crate::{
     gen::{GenerateCode, GeneratorBackend},
-    ir::{
-        decompile,
-        expression::{EmptySuperCall, Expression, InstructionComment},
-        frame::RuntimeBase,
-    },
+    ir::expression::{EmptySuperCall, Expression, InstructionComment},
 };
 
-use super::{JavaBackend, JavaContext, JavaScopeRequirements};
+use super::JavaBackend;
 
-#[derive(Debug, Clone, Copy)]
-pub struct MethodContext<'a> {
-    pub is_constructor: bool,
+pub type CodeGenContext<'m, 'data> = (&'m Member, &'data CodeData);
 
-    pub code: &'a CodeData,
-}
-
-impl<'a, C: AsRef<[u8]>> GenerateCode<C, MethodContext<'a>> for JavaBackend {
-    fn write_value<W: std::io::Write>(
-        &self,
-        lang: &JavaContext,
-        ctx: &MethodContext<'a>,
-        code: &C,
-        w: &mut W,
-    ) -> Result<Self::ScopeRequirements, std::io::Error> {
-        let req = JavaScopeRequirements::default();
-
-        let runtime_pool: RuntimeBase = RuntimeBase {
-            constant_pool: lang
-                .constant_pool
-                .as_ref()
-                .expect("no contant pool")
-                .clone(),
-        };
-
-        let ir = decompile(&runtime_pool, *ctx, code);
-
-        for expression in ir {
-            self.write_value(lang, ctx, &expression, w)?;
-        }
-
-        Ok(req)
-    }
-}
-
-impl GenerateCode<Expression, MethodContext<'_>> for JavaBackend {
+impl<'m, 'data> GenerateCode<Expression, CodeGenContext<'m, 'data>> for JavaBackend {
     fn write_value<W: std::io::Write>(
         &self,
         lang: &Self::LanguageContext,
-        _ctx: &MethodContext,
+        ctx: &CodeGenContext,
         input: &Expression,
         w: &mut W,
     ) -> Result<Self::ScopeRequirements, std::io::Error> {
         #[allow(unreachable_patterns)]
         match input {
-            Expression::Comment(ic) => self.write_value(lang, &(), ic, w),
-            Expression::Super(it) => self.write_value(lang, &(), it, w),
+            Expression::Comment(it) => self.write_value(lang, ctx, it, w),
+            Expression::Super(it) => self.write_value(lang, ctx, it, w),
             _ => todo!("unimplemented expression"),
         }
     }
 }
 
-impl<B: GeneratorBackend> GenerateCode<EmptySuperCall> for B {
+impl<'m, 'data, B: GeneratorBackend> GenerateCode<EmptySuperCall, CodeGenContext<'m, 'data>> for B {
     fn write_value<W: std::io::Write>(
         &self,
         _: &Self::LanguageContext,
-        _: &(),
+        _: &CodeGenContext<'m, 'data>,
         _: &EmptySuperCall,
         w: &mut W,
     ) -> Result<Self::ScopeRequirements, std::io::Error> {
@@ -77,11 +40,11 @@ impl<B: GeneratorBackend> GenerateCode<EmptySuperCall> for B {
     }
 }
 
-impl<B: GeneratorBackend> GenerateCode<InstructionComment> for B {
+impl<'m, 'data, B: GeneratorBackend> GenerateCode<InstructionComment, CodeGenContext<'m, 'data>> for B {
     fn write_value<W: std::io::Write>(
         &self,
         _: &Self::LanguageContext,
-        _: &(),
+        _: &CodeGenContext<'m, 'data>,
         input: &InstructionComment,
         w: &mut W,
     ) -> Result<Self::ScopeRequirements, std::io::Error> {

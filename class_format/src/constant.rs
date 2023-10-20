@@ -1,4 +1,4 @@
-use crate::error::ConstantError;
+use crate::error::{ConstantError, ConstantPoolError};
 use crate::ext::ReadByteVecExt;
 use byteorder::{ReadBytesExt, BE};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
@@ -44,7 +44,17 @@ pub enum ConstantTag {
     Package = 20,
 }
 
-#[derive(Debug, Clone, PartialEq, Hash)]
+impl ConstantTag {
+    pub fn length(&self) -> usize {
+        match self {
+            ConstantTag::Long => 2,
+            ConstantTag::Double => 2,
+            _ => 1,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum Constant {
     Class {
         name_index: u16,
@@ -138,6 +148,8 @@ impl Constant {
     }
 
     pub fn read_from<R: Read>(r: &mut R) -> Result<Constant, ConstantError> {
+        log::trace!("enter Constant::read_from(impl Read)");
+
         let tag = ConstantTag::try_from(r.read_u8()?)?;
 
         Ok(match tag {
@@ -214,4 +226,108 @@ impl Constant {
     }
 }
 
-pub type ConstantPool = HashMap<u16, Constant>;
+#[derive(Debug, Clone)]
+pub struct ConstantPool {
+    pub members: HashMap<usize, Constant>,
+    size: usize,
+}
+
+#[macro_export]
+macro_rules! constant_match {
+    ($constant: expr, Constant::$exp: ident { $($param: ident),* } ) => {
+        match $constant {
+            Constant::$exp { $($param),* } => {
+                Ok(($($param),*))
+            }
+            other => {
+                Err(ConstantPoolError::UnexpectedType { found: other.tag(), expected: ConstantTag::$exp })
+            }
+        }
+    };
+    ($constant: expr, Constant::$exp: ident { $($param: ident, )* .. } ) => {
+        match $constant {
+            Constant::$exp { $($param,)* .. } => {
+                Ok(($($param),*))
+            }
+            other => {
+                Err(ConstantPoolError::UnexpectedType { found: other.tag(), expected: ConstantTag::$exp })
+            }
+        }
+    };
+    ($constant: expr, Constant::$exp: ident { $($param: ident),* } => $code: block) => {
+        match $constant {
+            Constant::$exp { $($param),* } => {
+                Ok($code)
+            }
+            other => {
+                Err(ConstantPoolError::UnexpectedType { found: other.tag(), expected: ConstantTag::$exp })
+            }
+        }
+    };
+    ($constant: expr, Constant::$exp: ident { $($param: ident,)* .. } => $code: block) => {
+        match $constant {
+            Constant::$exp { $($param,)* .. } => {
+                Ok($code)
+            }
+            other => {
+                Err(ConstantPoolError::UnexpectedType { found: other.tag(), expected: ConstantTag::$exp })
+            }
+        }
+    };
+}
+
+impl ConstantPool {
+    pub fn new() -> ConstantPool {
+        ConstantPool {
+            members: HashMap::new(),
+            size: 1,
+        }
+    }
+
+    pub fn with_capacity(capacity: usize) -> ConstantPool {
+        ConstantPool {
+            members: HashMap::with_capacity(capacity),
+            size: 1,
+        }
+    }
+
+    pub fn try_get(&self, index: usize) -> Result<&Constant, ConstantPoolError> {
+        self.members
+            .get(&index)
+            .ok_or(ConstantPoolError::InvalidIndex {
+                index,
+                length: self.size,
+            })
+    }
+
+    pub fn get(&self, index: usize) -> &Constant {
+        match self.members.get(&index) {
+            Some(it) => it,
+            None => panic!(
+                "no constant pool member at index {} (size: {})",
+                index,
+                self.members.len()
+            ),
+        }
+    }
+
+    pub unsafe fn get_unchecked(&self, index: usize) -> &Constant {
+        self.members.get(&index).unwrap_unchecked()
+    }
+
+    pub fn insert(&mut self, constant: Constant) {
+        log::trace!("ConstantPool::insert(&self, {:?})", &constant);
+        let constant_length = constant.tag().length();
+        self.members.insert(self.size, constant);
+        self.size += constant_length;
+    }
+
+    pub fn size(&self) -> usize {
+        self.size
+    }
+
+    pub fn get_class_name(&mut self, class_index: usize) -> Result<String, ConstantPoolError> {
+        let name_i = constant_match!(self.get(class_index), Constant::Class { name_index })?;
+        constant_match!(self.get(*name_i as usize), Constant::Utf8 { value }).cloned()
+    }
+}

@@ -1,17 +1,18 @@
 use java::JavaGeneratorBuilder;
 use std::{io::Cursor, ops::Deref};
 
+use self::indent::IndentKind;
+
 pub mod java;
 pub mod indent;
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 pub enum GeneratorVerbosity {
     /// Generate all expressions, including synthetic and implicit ones (e.g. `super()`)
     All,
     /// Generate clean, minimal sources that produce the same output classes
     Clean
-    
 }
 
 pub trait GeneratorBackend: Sized {

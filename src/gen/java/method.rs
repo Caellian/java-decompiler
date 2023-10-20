@@ -1,14 +1,17 @@
+use std::io::Cursor;
+
 use jvm_class_format::{
     attribute::{AsData, CodeData, MethodParameterData},
     AccessFlags, ClassPath, Constant, Member,
 };
 
-use crate::gen::{
-    java::{JavaBackend, JavaScopeRequirements},
-    GenerateCode,
+use crate::{
+    gen::{
+        java::{JavaBackend, JavaScopeRequirements},
+        GenerateCode, GeneratorBackend, GeneratorVerbosity,
+    },
+    ir::decompile,
 };
-
-use super::code::MethodContext;
 
 #[derive(Debug, Default)]
 pub struct ClassContext {
@@ -47,6 +50,35 @@ impl GenerateCode<Member, ClassContext> for JavaBackend {
     ) -> Result<Self::ScopeRequirements, std::io::Error> {
         let mut req = JavaScopeRequirements::default();
 
+        let code: &CodeData = method
+            .attributes
+            .get("Code")
+            .expect("expected a code attribute")
+            .as_data()
+            .unwrap();
+
+        let constant_pool = lang.constant_pool.as_ref().expect("no contant pool");
+
+        let expressions = decompile(constant_pool, method, code);
+
+        let mut generated = Vec::new();
+        {
+            let mut gen_w = Cursor::new(&mut generated);
+            for expression in expressions {
+                let e_req = self.write_value(lang, &(method, code), &expression, &mut gen_w)?;
+                req.include(e_req);
+            }
+        }
+
+        if self.verbosity() == GeneratorVerbosity::All {
+            if method.is_constructor()
+                && method.descriptor.arguments.len() == 0
+                && generated.len() == 0
+            {
+                return Ok(req);
+            }
+        }
+
         if ctx.synthetic {
             w.write_all(b"// synthetic method\n\n")?;
         }
@@ -55,7 +87,7 @@ impl GenerateCode<Member, ClassContext> for JavaBackend {
 
         if !method.is_constructor() {
             let (tn, method_req) = self.generate(lang, &(), &method.descriptor.value)?;
-            req.append(method_req.imports);
+            req.add_import(method_req.imports);
 
             write!(w, " {} {}(", tn, method.name)?;
         } else {
@@ -75,7 +107,7 @@ impl GenerateCode<Member, ClassContext> for JavaBackend {
 
             for (i, arg) in method.descriptor.arguments.iter().enumerate() {
                 let (arg_type, tr) = self.generate(lang, &(), arg)?;
-                req.append(tr.imports);
+                req.add_import(tr.imports);
 
                 let arg_name: String = if let Some(param) = params.and_then(|it| it.get(i)) {
                     // let flags = param.access_flags; // TODO: Check spec
@@ -83,7 +115,7 @@ impl GenerateCode<Member, ClassContext> for JavaBackend {
                     if let Some(Constant::Utf8 { value }) = lang
                         .constant_pool
                         .as_ref()
-                        .and_then(|it| it.get(&param.name_index))
+                        .and_then(|it| it.try_get(param.name_index as usize).ok())
                     {
                         value.to_string()
                     } else {
@@ -100,20 +132,7 @@ impl GenerateCode<Member, ClassContext> for JavaBackend {
             }
         }
         w.write_all(b") {\n")?;
-
-        let code: &CodeData = method
-            .attributes
-            .get("Code")
-            .expect("expected a code attribute")
-            .as_data()
-            .unwrap();
-        let code_ctx = MethodContext {
-            is_constructor: method.is_constructor(),
-            code,
-        };
-        let code_req = self.write_value(lang, &code_ctx, &code.code, w)?;
-        req.append(code_req.imports);
-
+        w.write_all(&generated)?;
         w.write_all(b"}\n")?;
 
         Ok(req)

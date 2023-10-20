@@ -1,23 +1,23 @@
 use std::collections::HashMap;
 
 use jvm_class_format::{
-    attribute::{AttributeValue, ExceptionTableEntry},
-    Constant,
+    attribute::{AttributeValue, ExceptionTableEntry, CodeData},
+    ConstantPool,
 };
 
-use crate::gen::java::code::MethodContext;
-
 pub struct RuntimeBase {
-    pub constant_pool: HashMap<u16, Constant>,
+    pub constant_pool: ConstantPool,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum StackValue {}
 
-pub struct RuntimeFrame<'b, 'c> {
-    pub base: &'b RuntimeBase,
+#[derive(Debug, Clone)]
+pub struct RuntimeFrame<'cp, 'code> {
+    pub constant_pool: &'cp ConstantPool,
 
-    pub exception_table: &'c [ExceptionTableEntry],
-    pub attributes: &'c HashMap<String, AttributeValue>,
+    pub exception_table: &'code [ExceptionTableEntry],
+    pub attributes: &'code HashMap<String, AttributeValue>,
 
     pub stack_size: usize,
     pub stack: Vec<StackValue>,
@@ -25,18 +25,32 @@ pub struct RuntimeFrame<'b, 'c> {
     pub max_locals: usize,
 }
 
-impl<'b, 'c> RuntimeFrame<'b, 'c> {
-    pub fn new(base: &'b RuntimeBase, ctx: MethodContext<'c>) -> Self {
+impl<'cp, 'code> RuntimeFrame<'cp, 'code> {
+    pub fn new(base: &'cp ConstantPool, code: &'code CodeData) -> Self {
         RuntimeFrame {
-            base,
+            constant_pool: base,
 
-            exception_table: &ctx.code.exception_table,
-            attributes: &ctx.code.attributes,
+            exception_table: &code.exception_table,
+            attributes: &code.attributes,
 
-            stack_size: ctx.code.max_stack,
-            stack: Vec::with_capacity(ctx.code.max_stack),
+            stack_size: code.max_stack,
+            stack: Vec::with_capacity(code.max_stack),
 
-            max_locals: ctx.code.max_locals,
+            max_locals: code.max_locals,
+        }
+    }
+
+    pub fn new_inner(&self) -> Self {
+        RuntimeFrame {
+            constant_pool: self.constant_pool,
+
+            exception_table: self.exception_table,
+            attributes: self.attributes,
+
+            stack_size: self.stack_size,
+            stack: self.stack.clone(),
+
+            max_locals: self.max_locals,
         }
     }
 
