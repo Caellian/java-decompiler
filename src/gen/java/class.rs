@@ -116,44 +116,60 @@ impl GenerateCode<Class> for JavaBackend {
                     }
                 }
             }
-            w.write_all(b" {\n")?;
+            w.write_all(b" {")?;
 
             // TODO: generate enum entries
 
-            tracing::debug!("- Generating fields for {}", class_name);
+            let contents = {
+                let mut content_buffer = Vec::with_capacity(512);
+                let mut w: Cursor<&mut Vec<u8>> = Cursor::new(&mut content_buffer);
 
-            let mut class_indent = Indented::new(&mut w, lang.indentation, 1, b"{", b"}");
+                tracing::debug!("- Generating fields for {}", class_name);
 
-            for field in &class.fields {
-                let field_requirements =
-                    self.write_value(&lang, &FieldContext, field, &mut class_indent)?;
-                req.add_import(field_requirements.imports);
+                let mut class_indent = Indented::new(&mut w, lang.indentation, 1, b"{", b"}");
+
+                for field in &class.fields {
+                    let field_requirements =
+                        self.write_value(&lang, &FieldContext, field, &mut class_indent)?;
+                    req.add_import(field_requirements.imports);
+                }
+
+                tracing::debug!("- Generating methods for {}", class_name);
+
+                for method in &class.methods {
+                    let method_ctx = ClassContext {
+                        class_name: class.class_name.clone(),
+                        ..Default::default()
+                    };
+                    let method_requirements =
+                        self.write_value(&lang, &method_ctx, method, &mut class_indent)?;
+                    req.add_import(method_requirements.imports);
+                }
+
+                content_buffer
+            };
+
+            if !contents.is_empty() {
+                w.write_all(b"\n")?;
             }
-
-            tracing::debug!("- Generating methods for {}", class_name);
-
-            for method in &class.methods {
-                let method_ctx = ClassContext {
-                    class_name: class.class_name.clone(),
-                    ..Default::default()
-                };
-                let method_requirements =
-                    self.write_value(&lang, &method_ctx, method, &mut class_indent)?;
-                req.add_import(method_requirements.imports);
-            }
-
+            w.write_all(&contents)?;
             w.write_all(b"}\n")?;
             w.flush()?;
 
             result
         };
 
+        let mut has_imports = false;
         for import in req.imports.drain() {
+            has_imports = true;
             w.write_all(b"import ")?;
             w.write_all(import.full_path().as_bytes())?;
             w.write_all(b";\n")?;
         }
-        w.write_all(b"\n")?;
+
+        if has_imports {
+            w.write_all(b"\n")?;
+        }
 
         w.write_all(&delayed)?;
 

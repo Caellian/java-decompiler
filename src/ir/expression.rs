@@ -37,6 +37,7 @@ pub trait CheckExpression {
     ) -> Option<(usize, Expression)>;
 }
 
+#[derive(Debug)]
 pub enum Expression {
     EmptyConstructor(EmptyConstructor),
     ReturnStatement(ReturnStatement),
@@ -64,6 +65,7 @@ impl CheckExpression for InstructionComment {
     }
 }
 
+#[derive(Debug)]
 pub struct EmptyConstructor;
 
 impl CheckExpression for EmptyConstructor {
@@ -91,7 +93,8 @@ impl CheckExpression for EmptyConstructor {
     }
 }
 
-pub struct ReturnStatement; 
+#[derive(Debug)]
+pub struct ReturnStatement;
 
 impl CheckExpression for ReturnStatement {
     fn test<'cp, 'code>(
@@ -112,6 +115,7 @@ impl CheckExpression for ReturnStatement {
     }
 }
 
+#[derive(Debug)]
 pub struct EmptySuperCall;
 
 impl CheckExpression for EmptySuperCall {

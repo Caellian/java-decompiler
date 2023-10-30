@@ -21,7 +21,8 @@ impl<'m, 'data> GenerateCode<Expression, CodeGenContext<'m, 'data>> for JavaBack
         match input {
             Expression::Comment(it) => self.write_value(lang, ctx, it, w),
             Expression::Super(it) => self.write_value(lang, ctx, it, w),
-            _ => todo!("unimplemented expression"),
+            Expression::EmptyConstructor(_) => Ok(Default::default()),
+            expr => todo!("unimplemented expression: {:?}", expr),
         }
     }
 }
@@ -40,7 +41,9 @@ impl<'m, 'data, B: GeneratorBackend> GenerateCode<EmptySuperCall, CodeGenContext
     }
 }
 
-impl<'m, 'data, B: GeneratorBackend> GenerateCode<InstructionComment, CodeGenContext<'m, 'data>> for B {
+impl<'m, 'data, B: GeneratorBackend> GenerateCode<InstructionComment, CodeGenContext<'m, 'data>>
+    for B
+{
     fn write_value<W: std::io::Write>(
         &self,
         _: &Self::LanguageContext,

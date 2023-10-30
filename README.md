@@ -11,6 +11,10 @@ Pattern matching doesn't cover all instructions yet so a lot of the output is co
 
 Most command line arguments aren't properly handled yet.
 
+### Testing
+
+In order to run the test suite `JAVA_HOME` environment variable must be set or `javac` must be in path.
+
 ## JVM support status
 
 Latest version is currently being written to support any semi-recent Java version.

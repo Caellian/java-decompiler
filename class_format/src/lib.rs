@@ -141,6 +141,14 @@ impl ClassPath {
         });
     }
 
+    pub fn from_class_index(
+        pool: &ConstantPool,
+        class_index: usize,
+    ) -> Result<Self, ClassPathError> {
+        let utf8_index = constant_match!(pool.get(class_index), Constant::Class { name_index } => { *name_index as usize })?;
+        ClassPath::try_from(pool.get(utf8_index))
+    }
+
     pub fn parse(name: impl AsRef<str>) -> Result<Self, ClassPathError> {
         let mut cursor = std::io::Cursor::new(name.as_ref());
         Self::read_from(&mut cursor)
@@ -230,26 +238,6 @@ pub struct Class {
     pub attributes: HashMap<String, AttributeValue>,
 }
 
-fn name_from_class_index(
-    index: usize,
-    constant_pool: &ConstantPool,
-) -> Result<ClassPath, ClassReadError> {
-    log::trace!("enter name_from_class_index({}, &constant_pool)", index);
-    let constant = constant_pool.try_get(index)?;
-
-    match constant {
-        Constant::Class { name_index } => match constant_pool.try_get(*name_index as usize)? {
-            Constant::Utf8 { value } => Ok(ClassPath::parse(value)?),
-            _ => Err(ClassReadError::InvalidClassNameReference),
-        },
-        other => Err(ConstantPoolError::UnexpectedType {
-            found: other.tag(),
-            expected: ConstantTag::Class,
-        }
-        .into()),
-    }
-}
-
 impl Class {
     pub fn open(path: impl AsRef<Path>) -> Result<Class, ClassReadError> {
         let mut file = File::open(path)?;
@@ -306,12 +294,18 @@ impl Class {
             "Class::try_from(impl Read)::class_name#{}",
             class_const_index
         );
-        let class_name = ClassPath::try_from(constant_pool.get(class_const_index))?;
+        let class_name = ClassPath::from_class_index(&constant_pool, class_const_index)?;
 
-        log::trace!("Class::read_from(impl Read)::super_name");
         let super_const_index = r.read_u16::<BE>()? as usize;
+        log::trace!(
+            "Class::read_from(impl Read)::super_name#{}",
+            super_const_index
+        );
         let super_name = if super_const_index != 0 {
-            Some(ClassPath::try_from(constant_pool.get(class_const_index))?)
+            Some(ClassPath::from_class_index(
+                &constant_pool,
+                super_const_index,
+            )?)
         } else {
             None
         };
@@ -322,7 +316,7 @@ impl Class {
 
         for _ in 0..interface_count {
             let interface_index = r.read_u16::<BE>()? as usize;
-            let interface_name = name_from_class_index(interface_index, &constant_pool)?;
+            let interface_name = ClassPath::from_class_index(&constant_pool, interface_index)?;
 
             interfaces.push(interface_name);
         }

@@ -172,7 +172,7 @@ impl Default for JavaContext {
             header_message: Some(
                 "Generated file - do not edit, your changes will be lost.".to_string(),
             ),
-            indentation: IndentKind::Space(4),
+            indentation: IndentKind::Space(2),
             constant_pool: None,
         }
     }
