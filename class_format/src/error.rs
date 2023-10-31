@@ -1,6 +1,6 @@
 use crate::constant::ReferenceKind;
 use crate::ty::JVMType;
-use crate::ConstantTag;
+use crate::{ConstantTag, Op};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -11,6 +11,18 @@ pub enum ConstantPoolError {
     UnexpectedType {
         found: ConstantTag,
         expected: ConstantTag,
+    },
+}
+
+#[derive(Error, Debug)]
+pub enum OpReadError {
+    #[error("unknown op code: 0x{0:X}")]
+    Unknown(u8),
+    #[error("op '{op}' requires {expected} arguments; found {available}")]
+    MissingArgs {
+        op: Op,
+        expected: usize,
+        available: usize,
     },
 }
 

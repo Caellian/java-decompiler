@@ -4,9 +4,12 @@ use std::convert::TryFrom;
 use std::fmt::{Display, Formatter};
 use std::io::{ErrorKind, Read};
 
+use crate::error::OpReadError;
+
 macro_rules! impl_ops {
     [$(($op: ident, $code: literal, $argc: literal)),+] => {paste::paste!{
         #[derive(Debug, Copy, Clone, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
+        #[num_enum(error_type(name = OpReadError, constructor = OpReadError::Unknown))]
         #[non_exhaustive]
         #[repr(u8)]
         pub enum Op {
@@ -251,41 +254,157 @@ impl Display for Op {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub struct Instruction {
-    pub op: Op,
-    pub args: [u8; 4],
+#[derive(Clone, Copy)]
+#[repr(C)]
+union OpArgs {
+    none: [u8; 0],
+    one: [u8; 1],
+    two: [u8; 2],
+    three: [u8; 3],
+    four: [u8; 4],
 }
+
+impl OpArgs {
+    fn new(op: Op) -> OpArgs {
+        match op.argc() {
+            0 => OpArgs { none: [0; 0] },
+            1 => OpArgs { one: [0; 1] },
+            2 => OpArgs { two: [0; 2] },
+            3 => OpArgs { three: [0; 3] },
+            4 => OpArgs { four: [0; 4] },
+            _ => unreachable!("invalid argument count"),
+        }
+    }
+
+    unsafe fn args_of(&self, op: Op) -> &[u8] {
+        match op.argc() {
+            0 => &self.none,
+            1 => &self.one,
+            2 => &self.two,
+            3 => &self.three,
+            4 => &self.four,
+            argc => unreachable!("invalid argument count: {}", argc),
+        }
+    }
+
+    unsafe fn mut_args_of(&mut self, op: Op) -> &mut [u8] {
+        match op.argc() {
+            0 => &mut self.none,
+            1 => &mut self.one,
+            2 => &mut self.two,
+            3 => &mut self.three,
+            4 => &mut self.four,
+            argc => unreachable!("invalid argument count: {}", argc),
+        }
+    }
+}
+
+// TODO: Switch to #[repr(C, u8)] union?
+// - Using an union feels less cumbersome.
+// - Construction from bytes is weird with repr(C, u8)
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Instruction {
+    op: Op,
+    args: OpArgs,
+}
+
+impl std::fmt::Debug for Instruction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Instruction")
+            .field("op", &self.op)
+            .field("args", &self.args())
+            .finish()
+    }
+}
+
+impl PartialEq for Instruction {
+    fn eq(&self, other: &Self) -> bool {
+        self.op == other.op && self.args() == other.args()
+    }
+}
+impl Eq for Instruction {}
 
 impl Instruction {
     pub fn read_from<R: Read>(r: &mut R) -> Result<Instruction, std::io::Error> {
         let op = Op::try_from(r.read_u8()?)
             .map_err(|e| std::io::Error::new(ErrorKind::InvalidData, e))?;
 
-        let mut args = [0; 4];
-        r.read_exact(&mut args[..op.argc()])?;
+        let mut instruction = Instruction {
+            op,
+            args: OpArgs::new(op),
+        };
+        r.read_exact(instruction.args_mut())?;
 
-        Ok(Instruction { op, args })
+        Ok(instruction)
     }
 
-    pub fn from_bytecode(code: impl AsRef<[u8]>) -> Vec<Instruction> {
-        let code = code.as_ref();
-        let mut instructions = Vec::with_capacity(code.len());
+    pub fn from_slice<'a>(slice: &'a [u8]) -> Result<&'a Instruction, OpReadError> {
+        let op = Op::try_from(*slice.get(0).ok_or(OpReadError::Unknown(0))?)?;
+        if slice.len() <= op.argc() {
+            return Err(OpReadError::MissingArgs {
+                op,
+                expected: op.argc(),
+                available: slice.len() - 1,
+            });
+        }
+        Ok(unsafe {
+            // SAFETY:
+            // - Checked that the slice is big enough, that the Op code is valid
+            // and that there's enough tailing argument bytes - so the memory is
+            // definitely a valid Instruction.
+            // - Instruction is unaligned so alignment doesn't have to be checked.
+            // - 'a reference is passed to returned data so we're not messing up
+            // borrow lifetimes.
 
-        let mut pos = 0;
-        while pos < code.len() {
-            let op = Op::try_from(code[pos]).unwrap();
-            pos += 1;
-            let mut instruction = Instruction { op, args: [0; 4] };
+            (slice.as_ptr() as *const Instruction)
+                .as_ref()
+                .unwrap_unchecked()
+        })
+    }
 
-            let argc = op.argc();
-            for offset in 0..argc {
-                instruction.args[offset] = code[pos + offset];
-            }
-            instructions.push(instruction);
-            pos += argc;
+    pub fn collect_instructions(code: &[u8]) -> Vec<&Instruction> {
+        InstructionIterator::new(code).collect()
+    }
+
+    #[inline]
+    pub fn op(&self) -> Op {
+        self.op
+    }
+
+    #[inline]
+    pub fn args(&self) -> &[u8] {
+        unsafe { self.args.args_of(self.op) }
+    }
+
+    #[inline]
+    pub fn args_mut(&mut self) -> &mut [u8] {
+        unsafe { self.args.mut_args_of(self.op) }
+    }
+}
+
+pub struct InstructionIterator<'a> {
+    pub bytecode: &'a [u8],
+    pub pos: usize,
+}
+
+impl<'a> InstructionIterator<'a> {
+    pub fn new(bytecode: &'a [u8]) -> Self {
+        InstructionIterator { bytecode, pos: 0 }
+    }
+}
+
+impl<'a> Iterator for InstructionIterator<'a> {
+    type Item = &'a Instruction;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.pos >= self.bytecode.len() {
+            return None;
         }
 
-        instructions
+        let i = Instruction::from_slice(&self.bytecode[self.pos..]).expect("invalid instruction");
+        self.pos += 1 + i.op.argc();
+
+        return Some(i);
     }
 }

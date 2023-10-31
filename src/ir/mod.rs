@@ -16,14 +16,14 @@ pub fn decompile<'cp, 'code>(
     method: &Member,
     code: &CodeData,
 ) -> Vec<Expression> {
-    let instructions = Instruction::from_bytecode(&code.code);
+    let instructions = Instruction::collect_instructions(&code.code);
 
     let frame = RuntimeFrame::new(constant_pool, code);
 
     let mut result = Vec::with_capacity(instructions.len());
 
     if method.is_constructor() {
-        if let Some((_, expr)) = EmptyConstructor::test(&instructions, 0, &frame) {
+        if let Some((_, expr)) = EmptyConstructor::test(instructions.as_slice(), 0, &frame) {
             return vec![expr];
         }
     }
@@ -34,7 +34,7 @@ pub fn decompile<'cp, 'code>(
         let (instruction_count, expr) = test_many_expr!(&[
             EmptySuperCall,
             InstructionComment
-        ], &instructions, offset, &frame)
+        ], instructions.as_slice(), offset, &frame)
         .unwrap();
 
         offset += instruction_count;

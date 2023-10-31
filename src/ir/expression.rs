@@ -5,12 +5,12 @@ use super::frame::RuntimeFrame;
 pub struct OpSeq<const LENGTH: usize>(pub [Op; LENGTH]);
 
 impl<const L: usize> OpSeq<L> {
-    pub fn test(&self, buffer: impl AsRef<[Instruction]>, offset: usize) -> bool {
+    pub fn test<'code>(&self, buffer: &[&'code Instruction], offset: usize) -> bool {
         if L > buffer.as_ref()[offset..].len() {
             return false;
         }
         for (i, op) in self.0.iter().enumerate() {
-            if buffer.as_ref()[offset + i].op != *op {
+            if buffer.as_ref()[offset + i].op() != *op {
                 return false;
             }
         }
@@ -31,7 +31,7 @@ macro_rules! test_many_expr {
 
 pub trait CheckExpression {
     fn test<'cp, 'code>(
-        buffer: impl AsRef<[Instruction]>,
+        buffer: &[&'code Instruction],
         offset: usize,
         ctx: &RuntimeFrame<'cp, 'code>,
     ) -> Option<(usize, Expression)>;
@@ -50,16 +50,14 @@ pub struct InstructionComment(pub Instruction);
 
 impl CheckExpression for InstructionComment {
     fn test<'cp, 'code>(
-        instr: impl AsRef<[Instruction]>,
+        instr: &[&'code Instruction],
         offset: usize,
         _: &RuntimeFrame<'cp, 'code>,
     ) -> Option<(usize, Expression)> {
         unsafe {
             Some((
                 1,
-                Expression::Comment(InstructionComment(
-                    instr.as_ref().get_unchecked(offset).clone(),
-                )),
+                Expression::Comment(InstructionComment(**instr.as_ref().get_unchecked(offset))),
             ))
         }
     }
@@ -70,7 +68,7 @@ pub struct EmptyConstructor;
 
 impl CheckExpression for EmptyConstructor {
     fn test<'cp, 'code>(
-        buffer: impl AsRef<[Instruction]>,
+        buffer: &[&'code Instruction],
         offset: usize,
         _: &RuntimeFrame<'cp, 'code>,
     ) -> Option<(usize, Expression)> {
@@ -98,7 +96,7 @@ pub struct ReturnStatement;
 
 impl CheckExpression for ReturnStatement {
     fn test<'cp, 'code>(
-        buffer: impl AsRef<[Instruction]>,
+        buffer: &[&'code Instruction],
         offset: usize,
         _: &RuntimeFrame<'cp, 'code>,
     ) -> Option<(usize, Expression)> {
@@ -120,7 +118,7 @@ pub struct EmptySuperCall;
 
 impl CheckExpression for EmptySuperCall {
     fn test<'cp, 'code>(
-        buffer: impl AsRef<[Instruction]>,
+        buffer: &[&'code Instruction],
         offset: usize,
         _: &RuntimeFrame<'cp, 'code>,
     ) -> Option<(usize, Expression)> {

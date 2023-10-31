@@ -1,88 +1,83 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "type": "java",
-      "name": "HelloWorld",
-      "request": "launch",
-      "mainClass": "tests.units.HelloWorld",
-      "projectName": "java-decompiler_8d168fe2"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "Debug unit tests in library 'jvm-class-format'",
-      "cargo": {
-        "args": ["test", "--no-run", "--lib", "--package=jvm-class-format"],
-        "filter": {
-          "name": "jvm-class-format",
-          "kind": "lib"
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'jaded'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=jaded"
+                ],
+                "filter": {
+                    "name": "jaded",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'jaded'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=jaded",
+                    "--package=jaded"
+                ],
+                "filter": {
+                    "name": "jaded",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'jaded'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=jaded",
+                    "--package=jaded"
+                ],
+                "filter": {
+                    "name": "jaded",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'run_units'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=run_units",
+                    "--package=jaded"
+                ],
+                "filter": {
+                    "name": "run_units",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
         }
-      },
-      "args": [],
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "Debug unit tests in library 'java-decompiler'",
-      "cargo": {
-        "args": [
-          "test",
-          "--no-run",
-          "--lib",
-          "--package=java-decompiler",
-          "--features=\"clap\""
-        ],
-        "filter": {
-          "name": "java-decompiler",
-          "kind": "lib"
-        }
-      },
-      "args": [],
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "Debug executable 'java_decompiler'",
-      "cargo": {
-        "args": [
-          "build",
-          "--bin=java_decompiler",
-          "--package=java-decompiler",
-          "--features=clap"
-        ],
-        "filter": {
-          "name": "java_decompiler",
-          "kind": "bin"
-        }
-      },
-      "args": [],
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "Debug unit tests in executable 'java_decompiler'",
-      "cargo": {
-        "args": [
-          "test",
-          "--no-run",
-          "--bin=java_decompiler",
-          "--package=java-decompiler",
-          "--features=clap"
-        ],
-        "filter": {
-          "name": "java_decompiler",
-          "kind": "bin"
-        }
-      },
-      "args": [],
-      "cwd": "${workspaceFolder}"
-    }
-  ]
+    ]
 }
