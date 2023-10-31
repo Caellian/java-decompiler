@@ -53,7 +53,7 @@ impl<'m, 'data, B: GeneratorBackend> GenerateCode<InstructionComment, CodeGenCon
     ) -> Result<Self::ScopeRequirements, std::io::Error> {
         w.write(b"// asm: ")?;
         w.write(input.0.op.name().as_bytes())?;
-        for arg in &input.0.args {
+        for arg in &input.0.args[..input.0.op.argc()] {
             write!(w, " 0x{:X}", *arg)?;
         }
         w.write(b"\n")?;

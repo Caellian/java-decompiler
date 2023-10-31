@@ -137,3 +137,6 @@ impl CheckExpression for EmptySuperCall {
         Some((2, Expression::Super(Self)))
     }
 }
+
+#[derive(Debug)]
+pub struct LocalDeclaration {}
